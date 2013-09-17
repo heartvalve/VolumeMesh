@@ -457,6 +457,11 @@ CellHandle TopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halfface
         }
     }
 
+	// add cell handle to each face
+	for(std::vector<HalfFaceHandle>::const_iterator it = _halffaces.begin(),
+			end = _halffaces.end(); it != end; ++it) {
+		face(face_handle(*it)).add_cell(ch) ; 
+	}
     return ch;
 }
 

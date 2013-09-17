@@ -5,6 +5,7 @@ if("${PROJECT_NAME}" STREQUAL "")
     project (OpenVolumeMesh)
 endif()
 
+# SET(CMAKE_CXX_FLAGS "-DINCLUDE_TEMPLATES")
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 

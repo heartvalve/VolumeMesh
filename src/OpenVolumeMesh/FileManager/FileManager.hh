@@ -100,6 +100,24 @@ public:
   template <class MeshT>
   bool writeFile(const std::string& _filename, const MeshT& _mesh) const;
 
+
+
+   /**
+	* \brief Read a mesh from the xmsh file
+	*/
+   template <typename MeshT>
+   bool readXmsh (const std::string& _filename, MeshT & _mesh, 
+				  bool _topologyCheck = true, 
+				  bool _computeBottomUpIncidences = true ) const ; 
+
+   /**
+	* \brief Write a mesh to the xmsh file
+	*/
+  template <class MeshT>
+  bool writeXmsh(const std::string& _filename, const MeshT& _mesh) const;
+   
+
+
   /**
    * \brief Test whether given file contains a hexahedral mesh
    */

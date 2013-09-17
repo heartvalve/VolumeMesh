@@ -101,14 +101,21 @@ public:
         return halfedges_;
     }
 
+	const std::vector<CellHandle> & cells () const {
+		return this->cells_ ; 
+	}
 protected:
 
     void set_halfedges(const std::vector<HalfEdgeHandle>& _halfedges) {
         halfedges_ = _halfedges;
     }
 
+	void add_cell (const CellHandle & _cell) {
+		cells_.push_back(_cell) ; 
+	}
 private:
     std::vector<HalfEdgeHandle> halfedges_;
+	std::vector<CellHandle> cells_; 
 };
 
 // Stream operator for faces

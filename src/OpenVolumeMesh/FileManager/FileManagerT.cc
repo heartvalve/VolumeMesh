@@ -271,7 +271,6 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
             _mesh.add_cell(hfs, _topologyCheck);
         }
     }
-
     while(!iff.eof()) {
         // "End of file reached while searching for input!"
         // is thrown here. \TODO Fix it!
@@ -279,7 +278,6 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
         // Read property
         readProperty(iff, _mesh);
     }
-
     iff.close();
 
     if(_computeBottomUpIncidences) {
@@ -492,8 +490,133 @@ void FileManager::writeProps(std::ostream& _ostr, const IteratorT& _begin, const
     }
 }
 
+
+//=================================================
+template <class MeshT>
+bool FileManager::readXmsh(const std::string& _filename, MeshT& _mesh,
+    bool _topologyCheck, bool _computeBottomUpIncidences) const {
+
+    typedef typename MeshT::PointT Point;
+	
+    std::ifstream iff(_filename.c_str(), std::ios::in);
+
+    if(!iff.good()) {
+        std::cerr << "Error: Could not open file " << _filename << " for reading!" << std::endl;
+        iff.close();
+        return false;
+    }
+
+	Point v = Point (0, 0, 0); // vertex cache 
+
+    std::string line;
+	while (std::getline(iff, line))
+	{
+		std::stringstream sstr(line.c_str()); 
+		std::string tag ;
+		sstr >> tag ; 
+		if (tag == "v")
+		{
+			sstr >> v[0] >> v[1] >> v[2] ; 
+			_mesh.add_vertex(v); 
+		}
+		if (tag == "f")
+		{
+			std::string substr ;
+			std::vector<VertexHandle> vf; 
+			while (sstr >> substr) 
+			{
+				// string to long
+				std::stringstream sstr2 (substr.c_str());
+				{
+					unsigned idx ;
+					sstr2 >> idx ;
+					vf.push_back(VertexHandle(idx )) ;
+				}
+			}
+			_mesh.add_face(vf); 
+		}
+		if (tag == "c")
+		{
+			std::string substr ;
+			std::vector<HalfFaceHandle> hfh; 
+			while (sstr >> substr) 
+			{
+				// string to long
+				std::stringstream sstr2 (substr.c_str());
+				{
+					unsigned idx ;
+					sstr2 >> idx ;
+//				FIX : need to decide the orientation of the halfedge . 
+					hfh.push_back(_mesh.halfface_handle (FaceHandle(idx), 1)); 
+				}
+			}
+			_mesh.add_cell(hfh); 			
+		}
+	}
+
+	return true; 
+}
+
+
+template <class MeshT>
+bool FileManager::writeXmsh(const std::string& _filename, const MeshT& _mesh) const{
+
+    typedef typename MeshT::Face Face;
+    typedef typename MeshT::PointT Point;
+
+    std::ofstream off(_filename.c_str(), std::ios::out);
+
+    if(!off.good()) {
+        std::cerr << "Error: Could not open file " << _filename << " for writing!" << std::endl;
+        off.close();
+        return false;
+    }
+	// write vertices 
+    for(VertexIter v_it = _mesh.v_iter(); v_it; ++v_it) {
+
+        Point v = _mesh.vertex(*v_it);
+        off << "v " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+    }
+
+    // write faces : face cites the vertex indices. 
+    for(FaceIter f_it = _mesh.f_iter(); f_it; ++f_it) {
+
+        HalfFaceHandle hf = _mesh.halfface_handle(*f_it, 0) ; 
+		off <<"f " ; 
+		for (OpenVolumeMesh::HalfFaceVertexIter hfv_it (hf, & _mesh) ; hfv_it.valid(); ++hfv_it)
+		{
+			off<<hfv_it->idx()<<' ' ; 
+		}
+		off<<std::endl; 
+    }
+
+	// write cell : cell cites the face indices. 
+
+	for (CellIter c_it = _mesh.c_iter(); c_it ; ++ c_it )
+	{
+		off<<"c " ; 
+		const std::vector <HalfFaceHandle>  & hf = _mesh.cell(*c_it).halffaces(); 
+		for (unsigned i = 0; i < hf.size(); ++i) 
+		{
+			off << _mesh.face_handle (hf[i]).idx()<<' ' ; 
+		}
+		off<<std::endl; 
+	}
+	off.close(); 
+	return true; 
+}
+
 //==================================================
 
 } // Namespace IO
 
 } // Namespace FileManager
+
+
+
+
+
+
+
+
+

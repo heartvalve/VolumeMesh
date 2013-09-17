@@ -716,7 +716,7 @@ public:
         if(_h.idx() < 0 || _subIdx > 1) return InvalidHalfFaceHandle;
         return HalfFaceHandle((2 * _h.idx()) + (_subIdx ? 1 : 0));
     }
-
+	
     /// Handle conversion
     static inline EdgeHandle edge_handle(const HalfEdgeHandle& _h) {
         // Is handle in range?
@@ -752,6 +752,10 @@ public:
         return HalfFaceHandle(_h.idx() - 1);
     }
 
+	static inline CellHandle cell_handle (const FaceHandle & _h){
+		if (_h.idx() < 0) return InvalidCellHandle; 
+		
+	}
 protected:
 
     // List of edges
