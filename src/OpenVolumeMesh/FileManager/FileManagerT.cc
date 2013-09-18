@@ -370,7 +370,6 @@ void FileManager::generateGenericProperty(const std::string& _entity_t, const st
 
 template<class MeshT>
 bool FileManager::writeFile(const std::string& _filename, const MeshT& _mesh) const {
-
     typedef typename MeshT::Face Face;
     std::ofstream off(_filename.c_str(), std::ios::out);
 
@@ -473,6 +472,8 @@ bool FileManager::writeFile(const std::string& _filename, const MeshT& _mesh) co
     return true;
 }
 
+
+
 //==================================================
 
 template<class IteratorT>
@@ -490,19 +491,28 @@ void FileManager::writeProps(std::ostream& _ostr, const IteratorT& _begin, const
     }
 }
 
-
 //=================================================
+
 template <class MeshT>
 bool FileManager::readXmsh(const std::string& _filename, MeshT& _mesh,
-    bool _topologyCheck, bool _computeBottomUpIncidences) const {
-
-    typedef typename MeshT::PointT Point;
-	
+    bool _topologyCheck, bool _computeBottomUpIncidences)  {
     std::ifstream iff(_filename.c_str(), std::ios::in);
+	this->readXmsh(iff, _mesh, _topologyCheck, _computeBottomUpIncidences ); 
+	iff.close(); 
+}
+
+//=================================================
+
+template <typename MeshT>
+bool FileManager::readXmsh (std::istream & iff, MeshT & _mesh, 
+				   bool _topologyCheck , 
+				   bool _computeBottomUpIncidences ) 
+{
+    typedef typename MeshT::PointT Point;
 
     if(!iff.good()) {
-        std::cerr << "Error: Could not open file " << _filename << " for reading!" << std::endl;
-        iff.close();
+        std::cerr << "Error: Could not open the stream for reading!" << std::endl;
+//        iff.close();
         return false;
     }
 
@@ -601,15 +611,24 @@ bool FileManager::readXmsh(const std::string& _filename, MeshT& _mesh,
 
 template <class MeshT>
 bool FileManager::writeXmsh(const std::string& _filename, const MeshT& _mesh) const{
+    std::ofstream off(_filename.c_str(), std::ios::out);
+	this->writeXmsh (off, _mesh) ; 
+	off.close(); 
+}
+
+//=================================================
+
+template <class MeshT>
+bool FileManager::writeXmsh(std::ostream & off, const MeshT& _mesh) const{
 
     typedef typename MeshT::Face Face;
     typedef typename MeshT::PointT Point;
 
-    std::ofstream off(_filename.c_str(), std::ios::out);
+//    std::ofstream off(_filename.c_str(), std::ios::out);
 
     if(!off.good()) {
-        std::cerr << "Error: Could not open file " << _filename << " for writing!" << std::endl;
-        off.close();
+//        std::cerr << "Error: Could not open file " << _filename << " for writing!" << std::endl;
+//        off.close();
         return false;
     }
 	// write vertices 
@@ -643,7 +662,36 @@ bool FileManager::writeXmsh(const std::string& _filename, const MeshT& _mesh) co
 		}
 		off<<std::endl; 
 	}
-	off.close(); 
+//	off.close(); 
+	return true; 
+}
+
+//==================================================
+template <class MeshT>
+bool FileManager::writeBoundaryOff(std::ostream & ostr, const MeshT& _mesh) const{
+
+	// FIX. Need to trim redundant vertices. 
+    if(!ostr.good()) {
+        std::cerr << "Error: Could not open stream for writing!" << std::endl;
+        return false;
+    }
+
+    typedef typename MeshT::PointT Point;
+    for(VertexIter v_it = _mesh.v_iter(); v_it; ++v_it) {
+
+        Point v = _mesh.vertex(*v_it);
+		std::cout << "v " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+    }
+	for (BoundaryFaceIter bfi (&_mesh) ; bfi.valid(); ++bfi )
+	{
+		HalfFaceHandle hfh = _mesh.halfface_handle (*bfi, 1) ; 
+		ostr<<"f " ; 
+		for (HalfFaceVertexIter hfv_it (hfh, & _mesh); hfv_it.valid() ; ++hfv_it)
+		{
+			ostr<<hfv_it->idx()+1<<' '; 
+		}
+		ostr<<std::endl; 		
+	}
 	return true; 
 }
 
