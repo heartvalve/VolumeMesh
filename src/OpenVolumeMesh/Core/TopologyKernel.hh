@@ -254,6 +254,10 @@ public:
     /// Add face via incident vertices
     virtual FaceHandle add_face(const std::vector<VertexHandle>& _vertices);
 
+	/// Add cell via faces. 
+	/// The orientation of halffaces will be adjucted automatically. 
+	virtual CellHandle add_cell(const std::vector<FaceHandle>& _faces, bool _topologyCheck) ; 
+
     /// Add cell via incident halffaces
     virtual CellHandle add_cell(const std::vector<HalfFaceHandle>& _halffaces, bool _topologyCheck = false);
 

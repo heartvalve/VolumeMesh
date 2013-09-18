@@ -187,6 +187,14 @@ public:
         std::swap(vertices_, _copy);
     }
 
+	int orient3d (const PointT & a , const PointT & b, const PointT & c , const PointT & d)
+	{
+		typedef typename PointT::value_type value_type ; 
+		value_type v = dot((d - a) , (b - a) % (c - a)) ;		
+		if (v > 0) return 1; 
+		if (v < 0) return -1; 
+		return 0; 
+	}
 private:
 
     std::vector<VecT> vertices_;

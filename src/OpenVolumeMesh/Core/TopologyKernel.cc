@@ -361,6 +361,28 @@ void TopologyKernel::reorder_incident_halffaces(const EdgeHandle& _eh) {
 }
 
 //========================================================================================
+CellHandle TopologyKernel::add_cell(const std::vector<FaceHandle>& _faces, bool _topologyCheck) 
+{
+	// FIX. Not finished yet. 
+	std::vector <HalfFaceHandle> _halffaces ; 
+	for (unsigned i = 0; i < _faces.size(); ++i) 
+	{
+		HalfFaceHandle hfh = this->halfface_handle (_faces[i] , 1) ; 
+		unsigned counter = 0; 
+		std::vector <VertexHandle> vhv [4] ; 
+		for (HalfFaceVertexIter hfv_it (hfh, this) ; hfv_it.valid() && counter < 3; ++hfv_it )
+		{
+//			vhv[counter] = *hfv_it ; 
+//			vhv[counter] = this->halfedge(*hfv_it).from_vertex(); 
+//			counter ++; 
+		}
+//		_halffaces.push_back(); 
+	}
+
+	return this->add_cell (_halffaces, _topologyCheck) ; 
+}
+
+//========================================================================================
 
 /// Add cell via incident halffaces
 CellHandle TopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halffaces, bool _topologyCheck) {
@@ -419,6 +441,7 @@ CellHandle TopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halfface
 
     CellHandle ch((int)cells_.size()-1);
 
+//	f_bottom_up_ = 1 ; 
     // Update face bottom-up incidences
     if(f_bottom_up_) {
 

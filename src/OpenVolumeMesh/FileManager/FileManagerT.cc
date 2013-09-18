@@ -539,6 +539,7 @@ bool FileManager::readXmsh(const std::string& _filename, MeshT& _mesh,
 		{
 			std::string substr ;
 			std::vector<HalfFaceHandle> hfh; 
+			std::vector<FaceHandle>  fh  ; 
 			while (sstr >> substr) 
 			{
 				// string to long
@@ -546,11 +547,51 @@ bool FileManager::readXmsh(const std::string& _filename, MeshT& _mesh,
 				{
 					unsigned idx ;
 					sstr2 >> idx ;
-//				FIX : need to decide the orientation of the halfedge . 
-					hfh.push_back(_mesh.halfface_handle (FaceHandle(idx), 1)); 
+					fh.push_back(FaceHandle(idx)); 
 				}
 			}
-			_mesh.add_cell(hfh); 			
+
+			// 1) compute the ceter of the polytope (cell)
+			std::set <unsigned> v_set; 
+			for (std::vector <FaceHandle>::const_iterator iter = fh.begin(); 
+				 iter != fh.end(); ++iter )
+			{
+				HalfFaceHandle candidate = _mesh.halfface_handle (*iter, 1) ; 
+				for (HalfFaceVertexIter hfv_it (candidate, & _mesh); hfv_it.valid(); ++hfv_it)
+				{
+					v_set.insert (hfv_it->idx()); 
+				}				
+			}
+			// tetrahedra now. 
+			assert (v_set.size() == 4) ; 
+
+			Point center (0,0,0) ; 
+			for (std::set <unsigned> ::const_iterator iter = v_set.begin(); iter != v_set.end(); ++iter ) 
+			{
+				center += _mesh.vertex (VertexHandle(*iter)) ; 
+			}
+			center /= v_set.size(); 
+
+			// 2) Decide the correct orientation of the face. 
+			for (std::vector <FaceHandle>::const_iterator iter = fh.begin(); 
+				 iter != fh.end(); ++iter )
+			{
+				HalfFaceHandle candidate = _mesh.halfface_handle (*iter, 1) ; 
+				// we use 4-predicate to decide the orientation of the halfface. 
+				unsigned counter = 0; 
+				std::vector <Point> orientation(4) ; 
+				for (HalfFaceVertexIter hfv_it (candidate, & _mesh); hfv_it.valid() && counter < 3 ; ++hfv_it)
+				{
+					orientation [counter] = _mesh.vertex(hfv_it->idx()) ; 
+					counter ++; 
+				}
+				orientation[counter] = center ; 
+				
+				int orient = _mesh.orient3d(orientation[0], orientation[1], orientation[2], orientation[3]) ; 
+				if (orient > 0) hfh.push_back(candidate);
+				else hfh.push_back(_mesh.halfface_handle (*iter, 0));  
+			}
+			_mesh.add_cell(hfh);
 		}
 	}
 
