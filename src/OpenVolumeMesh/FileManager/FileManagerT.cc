@@ -573,7 +573,7 @@ bool FileManager::readXmsh (std::istream & iff, MeshT & _mesh,
 				}				
 			}
 			// tetrahedra now. 
-			assert (v_set.size() == 4) ; 
+//			assert (v_set.size() == 4) ; 
 
 			Point center (0,0,0) ; 
 			for (std::set <unsigned> ::const_iterator iter = v_set.begin(); iter != v_set.end(); ++iter ) 
