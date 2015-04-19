@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 217 $                                                         *
- *   $Date: 2012-07-18 15:04:05 +0200 (Wed, 18 Jul 2012) $                    *
+ *   $Revision: 257 $                                                         *
+ *   $Date: 2013-12-04 15:29:31 +0100 (Wed, 04 Dec 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -43,79 +43,20 @@
 #ifndef PROPERTYDEFINES_HH_
 #define PROPERTYDEFINES_HH_
 
-#include <iostream>
-#include <typeinfo>
+#include <iosfwd>
 #include <stdexcept>
+#include <string>
+#include <typeinfo>
 
-#include "BaseProperty.hh"
 #include "PropertyHandles.hh"
+#include "PropertyPtr.hh"
 
 namespace OpenVolumeMesh {
 
 template <class T>
 class OpenVolumeMeshPropertyT;
-template <class PropT, class HandleT>
-class PropertyPtr;
 
 class ResourceManager;
-
-/// Property classes for the different entity types
-template<class T>
-class VertexPropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, VertexPropHandle> {
-public:
-    VertexPropertyT(const std::string& _name, ResourceManager& _resMan, VertexPropHandle _handle, const T _def = T());
-    ~VertexPropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
-template<class T>
-class EdgePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, EdgePropHandle> {
-public:
-    EdgePropertyT(const std::string& _name, ResourceManager& _resMan, EdgePropHandle _handle, const T _def = T());
-    ~EdgePropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
-template<class T>
-class HalfEdgePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, HalfEdgePropHandle> {
-public:
-    HalfEdgePropertyT(const std::string& _name, ResourceManager& _resMan, HalfEdgePropHandle _handle, const T _def = T());
-    ~HalfEdgePropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
-template<class T>
-class FacePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, FacePropHandle> {
-public:
-    FacePropertyT(const std::string& _name, ResourceManager& _resMan, FacePropHandle _handle, const T _def = T());
-    ~FacePropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
-template<class T>
-class HalfFacePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, HalfFacePropHandle> {
-public:
-    HalfFacePropertyT(const std::string& _name, ResourceManager& _resMan, HalfFacePropHandle _handle, const T _def = T());
-    ~HalfFacePropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
-template<class T>
-class CellPropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, CellPropHandle> {
-public:
-    CellPropertyT(const std::string& _name, ResourceManager& _resMan, CellPropHandle _handle, const T _def = T());
-    ~CellPropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
-template<class T>
-class MeshPropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, MeshPropHandle> {
-public:
-    MeshPropertyT(const std::string& _name, ResourceManager& _resMan, MeshPropHandle _handle, const T _def = T());
-    ~MeshPropertyT() {}
-    virtual void serialize(std::ostream& _ostr) const;
-    virtual void deserialize(std::istream& _istr);
-};
 
 template <class T>
 const std::string typeName();
@@ -131,6 +72,78 @@ template <> const std::string typeName<bool>();
 template <> const std::string typeName<float>();
 template <> const std::string typeName<double>();
 template <> const std::string typeName<std::string>();
+
+/// Property classes for the different entity types
+template<class T>
+class VertexPropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, VertexPropHandle> {
+public:
+    VertexPropertyT(const std::string& _name, ResourceManager& _resMan, VertexPropHandle _handle, const T _def = T());
+    virtual ~VertexPropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "VProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
+template<class T>
+class EdgePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, EdgePropHandle> {
+public:
+    EdgePropertyT(const std::string& _name, ResourceManager& _resMan, EdgePropHandle _handle, const T _def = T());
+    virtual ~EdgePropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "EProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
+template<class T>
+class HalfEdgePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, HalfEdgePropHandle> {
+public:
+    HalfEdgePropertyT(const std::string& _name, ResourceManager& _resMan, HalfEdgePropHandle _handle, const T _def = T());
+    virtual ~HalfEdgePropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "HEProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
+template<class T>
+class FacePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, FacePropHandle> {
+public:
+    FacePropertyT(const std::string& _name, ResourceManager& _resMan, FacePropHandle _handle, const T _def = T());
+    virtual ~FacePropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "FProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
+template<class T>
+class HalfFacePropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, HalfFacePropHandle> {
+public:
+    HalfFacePropertyT(const std::string& _name, ResourceManager& _resMan, HalfFacePropHandle _handle, const T _def = T());
+    virtual ~HalfFacePropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "HFProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
+template<class T>
+class CellPropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, CellPropHandle> {
+public:
+    CellPropertyT(const std::string& _name, ResourceManager& _resMan, CellPropHandle _handle, const T _def = T());
+    virtual ~CellPropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "CProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
+template<class T>
+class MeshPropertyT : public PropertyPtr<OpenVolumeMeshPropertyT<T>, MeshPropHandle> {
+public:
+    MeshPropertyT(const std::string& _name, ResourceManager& _resMan, MeshPropHandle _handle, const T _def = T());
+    virtual ~MeshPropertyT() {}
+    virtual void serialize(std::ostream& _ostr) const;
+    virtual void deserialize(std::istream& _istr);
+    virtual const std::string entityType() const { return "MProp"; }
+    virtual const std::string typeNameWrapper() const { return typeName<T>(); }
+};
 
 } // Namespace OpenVolumeMesh
 

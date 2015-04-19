@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 198 $                                                         *
- *   $Date: 2012-05-16 12:52:10 +0200 (Wed, 16 May 2012) $                    *
+ *   $Revision: 257 $                                                         *
+ *   $Date: 2013-12-04 15:29:31 +0100 (Wed, 04 Dec 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -44,9 +44,8 @@
 #ifndef OPENVOLUMEMESHBASEPROPERTY_HH
 #define OPENVOLUMEMESHBASEPROPERTY_HH
 
-#include <limits>
+#include <iosfwd>
 #include <string>
-#include <iostream>
 #include <vector>
 
 #include "OpenVolumeMeshHandle.hh"
@@ -111,9 +110,7 @@ public:
 	}
 
 	// Function to serialize a property
-	virtual void serialize(std::ostream& _ostr) const {
-	    _ostr << "\"" << name_ << "\"" << std::endl;
-	}
+	virtual void serialize(std::ostream& /*_ostr*/) const {}
 
 	// Function to deserialize a property
     virtual void deserialize(std::istream& /*_istr*/) {}

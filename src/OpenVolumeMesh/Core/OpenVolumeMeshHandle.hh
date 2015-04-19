@@ -34,19 +34,20 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 216 $                                                         *
- *   $Date: 2012-07-18 10:27:26 +0200 (Wed, 18 Jul 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 279 $                                                         *
+ *   $Date: 2014-06-25 12:50:14 +0200 (Wed, 25 Jun 2014) $                    *
+ *   $LastChangedBy: moebius $                                                *
  *                                                                           *
 \*===========================================================================*/
 
 #ifndef OPENVOLUMEMESHHANDLE_HH_
 #define OPENVOLUMEMESHHANDLE_HH_
 
-#include <iostream>
-#include <vector>
-#include <OpenVolumeMesh/System/FunctionalInclude.hh>
 #include <algorithm>
+#include <iosfwd>
+#include <vector>
+
+#include "../System/FunctionalInclude.hh"
 
 namespace OpenVolumeMesh {
 
@@ -117,7 +118,13 @@ class HEHandleCorrection {
 public:
     HEHandleCorrection(HalfEdgeHandle _thld) : thld_(_thld) {}
     void correctVecValue(std::vector<HalfEdgeHandle>& _vec) {
+#if defined(__clang_major__) && (__clang_major__ >= 5)
+        for(std::vector<HalfEdgeHandle>::iterator it = _vec.begin(), end = _vec.end(); it != end; ++it) {
+            correctValue(*it);
+        }
+#else
         std::for_each(_vec.begin(), _vec.end(), fun::bind(&HEHandleCorrection::correctValue, this, fun::placeholders::_1));
+#endif
     }
     void correctValue(HalfEdgeHandle& _h) {
         if(_h > thld_) _h.idx(_h.idx() - 2);
@@ -129,7 +136,13 @@ class HFHandleCorrection {
 public:
     HFHandleCorrection(HalfFaceHandle _thld) : thld_(_thld) {}
     void correctVecValue(std::vector<HalfFaceHandle>& _vec) {
+#if defined(__clang_major__) && (__clang_major__ >= 5)
+        for(std::vector<HalfFaceHandle>::iterator it = _vec.begin(), end = _vec.end(); it != end; ++it) {
+            correctValue(*it);
+        }
+#else
         std::for_each(_vec.begin(), _vec.end(), fun::bind(&HFHandleCorrection::correctValue, this, fun::placeholders::_1));
+#endif
     }
     void correctValue(HalfFaceHandle& _h) {
         if(_h > thld_) _h.idx(_h.idx() - 2);

@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 101 $                                                          *
- *   $Date: 2012-02-22 09:21:06 +0100 (Mi, 22 Feb 2012) $                   *
+ *   $Revision: 257 $                                                          *
+ *   $Date: 2013-12-04 15:29:31 +0100 (Wed, 04 Dec 2013) $                   *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -43,7 +43,7 @@
 #ifndef STATUS_HH_
 #define STATUS_HH_
 
-#include <iostream>
+#include <iosfwd>
 
 namespace OpenVolumeMesh {
 

@@ -63,8 +63,14 @@
 	 namespace fun = std::tr1;
    #else
      // hope for TR1 equivalents
-     #include <tr1/functional>
-     namespace fun = std::tr1;
+     #if defined(__clang_major__) && (__clang_major__ >= 5)
+       // Mavericks special treatment
+       #include <functional>
+       namespace fun = std;
+     #else
+       #include <tr1/functional>
+       namespace fun = std::tr1;
+     #endif
    #endif
 #endif
 

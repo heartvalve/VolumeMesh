@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 226 $                                                         *
- *   $Date: 2012-10-26 17:02:46 +0200 (Fri, 26 Oct 2012) $                    *
+ *   $Revision: 257 $                                                         *
+ *   $Date: 2013-12-04 15:29:31 +0100 (Wed, 04 Dec 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -43,6 +43,9 @@
 #ifndef RESOURCEMANAGER_HH_
 #define RESOURCEMANAGER_HH_
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
 #include <string>
 #include <vector>
 
@@ -78,16 +81,16 @@ public:
     template <class PropT, class HandleT> friend class PropertyPtr;
 
     /// Change size of stored vertex properties
-    void resize_vprops(unsigned int _nv);
+    void resize_vprops(size_t _nv);
 
     /// Change size of stored edge properties
-    void resize_eprops(unsigned int _ne);
+    void resize_eprops(size_t _ne);
 
     /// Change size of stored face properties
-    void resize_fprops(unsigned int _nf);
+    void resize_fprops(size_t _nf);
 
     /// Change size of stored cell properties
-    void resize_cprops(unsigned int _nc);
+    void resize_cprops(size_t _nc);
 
 protected:
 
@@ -116,17 +119,17 @@ public:
     void clear_mesh_props() { clearVec(mesh_props_); }
 
     /// Get number of vertices in mesh
-    virtual unsigned int n_vertices() const = 0;
+    virtual size_t n_vertices() const = 0;
     /// Get number of edges in mesh
-    virtual unsigned int n_edges() const = 0;
+    virtual size_t n_edges() const = 0;
     /// Get number of halfedges in mesh
-    virtual unsigned int n_halfedges() const = 0;
+    virtual size_t n_halfedges() const = 0;
     /// Get number of faces in mesh
-    virtual unsigned int n_faces() const = 0;
+    virtual size_t n_faces() const = 0;
     /// Get number of halffaces in mesh
-    virtual unsigned int n_halffaces() const = 0;
+    virtual size_t n_halffaces() const = 0;
     /// Get number of cells in mesh
-    virtual unsigned int n_cells() const = 0;
+    virtual size_t n_cells() const = 0;
 
     template<class T> VertexPropertyT<T> request_vertex_property(const std::string& _name = std::string(), const T _def = T());
 
@@ -160,19 +163,19 @@ private:
 
 public:
 
-    unsigned int n_vertex_props() const { return vertex_props_.size(); }
+    size_t n_vertex_props() const { return vertex_props_.size(); }
 
-    unsigned int n_edge_props() const { return edge_props_.size(); }
+    size_t n_edge_props() const { return edge_props_.size(); }
 
-    unsigned int n_halfedge_props() const { return halfedge_props_.size(); }
+    size_t n_halfedge_props() const { return halfedge_props_.size(); }
 
-    unsigned int n_face_props() const { return face_props_.size(); }
+    size_t n_face_props() const { return face_props_.size(); }
 
-    unsigned int n_halfface_props() const { return halfface_props_.size(); }
+    size_t n_halfface_props() const { return halfface_props_.size(); }
 
-    unsigned int n_cell_props() const { return cell_props_.size(); }
+    size_t n_cell_props() const { return cell_props_.size(); }
 
-    unsigned int n_mesh_props() const { return mesh_props_.size(); }
+    size_t n_mesh_props() const { return mesh_props_.size(); }
 
     template<class T> void set_persistent(VertexPropertyT<T>& _prop, bool _flag = true);
 
@@ -223,8 +226,11 @@ private:
     template <class FullPropT, class PropIterT>
     bool property_exists(const PropIterT& _begin, const PropIterT& _end, const std::string& _name) const {
 
-        if(_name.length() == 0) {
-            std::cerr << "Checking for the existance of anonymous properties is ambiguous!" << std::endl;
+        if(_name.empty()) {
+#ifndef NDEBUG
+            std::cerr << "property_exists(): Checking for the existence of anonymous properties is" << std::endl;
+            std::cerr << "ambiguous!" << std::endl;
+#endif
             return false;
         }
 
@@ -287,7 +293,7 @@ protected:
 private:
 
     template<class StdVecT>
-    void resize_props(StdVecT& _vec, unsigned int _n);
+    void resize_props(StdVecT& _vec, size_t _n);
 
     template<class StdVecT>
     void entity_deleted(StdVecT& _vec, const OpenVolumeMeshHandle& _h);

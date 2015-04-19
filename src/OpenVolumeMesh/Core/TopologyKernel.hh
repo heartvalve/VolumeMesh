@@ -34,19 +34,18 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 231 $                                                         *
- *   $Date: 2012-11-07 13:17:19 +0100 (Wed, 07 Nov 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 279 $                                                         *
+ *   $Date: 2014-06-25 12:50:14 +0200 (Wed, 25 Jun 2014) $                    *
+ *   $LastChangedBy: moebius $                                                *
  *                                                                           *
 \*===========================================================================*/
 
 #ifndef TOPOLOGYKERNEL_HH_
 #define TOPOLOGYKERNEL_HH_
 
+#include <cassert>
 #include <set>
 #include <vector>
-#include <iostream>
-#include <cassert>
 
 #include "BaseEntities.hh"
 #include "OpenVolumeMeshHandle.hh"
@@ -101,37 +100,99 @@ public:
     friend class HalfFaceIter;
     friend class CellIter;
 
-    VertexOHalfEdgeIter voh_iter(const VertexHandle& _h) const {
-        return VertexOHalfEdgeIter(_h, this);
+    /*
+     * Circulators
+     */
+
+protected:
+    template <class Circulator>
+    static Circulator make_end_circulator(const Circulator& _circ)
+    {
+        Circulator end = _circ;
+        if (end.valid()) {
+            end.lap(_circ.max_laps());
+            end.valid(false);
+        }
+        return end;
     }
 
-    HalfEdgeHalfFaceIter hehf_iter(const HalfEdgeHandle& _h) const {
-        return HalfEdgeHalfFaceIter(_h, this);
+public:
+
+    VertexOHalfEdgeIter voh_iter(const VertexHandle& _h, int _max_laps = 1) const {
+        return VertexOHalfEdgeIter(_h, this, _max_laps);
     }
 
-    VertexCellIter vc_iter(const VertexHandle& _h) const {
-        return VertexCellIter(_h, this);
+    std::pair<VertexOHalfEdgeIter, VertexOHalfEdgeIter> outgoing_halfedges(const VertexHandle& _h, int _max_laps = 1) const {
+        VertexOHalfEdgeIter begin = voh_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
     }
 
-    HalfEdgeCellIter hec_iter(const HalfEdgeHandle& _h) const {
-        return HalfEdgeCellIter(_h, this);
+    HalfEdgeHalfFaceIter hehf_iter(const HalfEdgeHandle& _h, int _max_laps = 1) const {
+        return HalfEdgeHalfFaceIter(_h, this, _max_laps);
     }
 
-    CellVertexIter cv_iter(const CellHandle& _h) const {
-        return CellVertexIter(_h, this);
+    std::pair<HalfEdgeHalfFaceIter, HalfEdgeHalfFaceIter> halfedge_halffaces(const HalfEdgeHandle& _h, int _max_laps = 1) const {
+        HalfEdgeHalfFaceIter begin = hehf_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
     }
 
-    CellCellIter cc_iter(const CellHandle& _h) const {
-        return CellCellIter(_h, this);
+    VertexCellIter vc_iter(const VertexHandle& _h, int _max_laps = 1) const {
+        return VertexCellIter(_h, this, _max_laps);
     }
 
-    HalfFaceVertexIter hfv_iter(const HalfFaceHandle& _h) const {
-        return HalfFaceVertexIter(_h, this);
+    std::pair<VertexCellIter, VertexCellIter> vertex_cells(const VertexHandle& _h, int _max_laps = 1){
+        VertexCellIter begin = vc_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
     }
 
-    BoundaryHalfFaceHalfFaceIter bhfhf_iter(const HalfFaceHandle& _ref_h) const {
-        return BoundaryHalfFaceHalfFaceIter(_ref_h, this);
+    HalfEdgeCellIter hec_iter(const HalfEdgeHandle& _h, int _max_laps = 1) const {
+        return HalfEdgeCellIter(_h, this, _max_laps);
     }
+
+    std::pair<HalfEdgeCellIter, HalfEdgeCellIter> halfedge_cells(const HalfEdgeHandle& _h, int _max_laps = 1){
+        HalfEdgeCellIter begin = hec_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
+    }
+
+    CellVertexIter cv_iter(const CellHandle& _h, int _max_laps = 1) const {
+        return CellVertexIter(_h, this, _max_laps);
+    }
+
+    std::pair<CellVertexIter, CellVertexIter> cell_vertices(const CellHandle& _h, int _max_laps = 1) const {
+        CellVertexIter begin = cv_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
+    }
+
+    CellCellIter cc_iter(const CellHandle& _h, int _max_laps = 1) const {
+        return CellCellIter(_h, this, _max_laps);
+    }
+
+    std::pair<CellCellIter, CellCellIter> cell_cells(const CellHandle& _h, int _max_laps = 1) const {
+        CellCellIter begin = cc_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
+    }
+
+    HalfFaceVertexIter hfv_iter(const HalfFaceHandle& _h, int _max_laps = 1) const {
+        return HalfFaceVertexIter(_h, this, _max_laps);
+    }
+
+    std::pair<HalfFaceVertexIter, HalfFaceVertexIter> halfface_vertices(const HalfFaceHandle& _h, int _max_laps = 1) const {
+        HalfFaceVertexIter begin = hfv_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
+    }
+
+    BoundaryHalfFaceHalfFaceIter bhfhf_iter(const HalfFaceHandle& _ref_h, int _max_laps = 1) const {
+        return BoundaryHalfFaceHalfFaceIter(_ref_h, this, _max_laps);
+    }
+
+    std::pair<BoundaryHalfFaceHalfFaceIter, BoundaryHalfFaceHalfFaceIter> boundary_halfface_halffaces(const HalfFaceHandle& _h, int _max_laps = 1) const {
+        BoundaryHalfFaceHalfFaceIter begin = bhfhf_iter(_h, _max_laps);
+        return std::make_pair(begin, make_end_circulator(begin));
+    }
+
+    /*
+     * Iterators
+     */
 
     BoundaryFaceIter bf_iter() const {
         return BoundaryFaceIter(this);
@@ -149,6 +210,10 @@ public:
         return VertexIter(this, VertexHandle(n_vertices()));
     }
 
+    std::pair<VertexIter, VertexIter> vertices() const {
+        return std::make_pair(vertices_begin(), vertices_end());
+    }
+
     EdgeIter e_iter() const {
         return EdgeIter(this);
     }
@@ -159,6 +224,10 @@ public:
 
     EdgeIter edges_end() const {
         return EdgeIter(this, EdgeHandle(edges_.size()));
+    }
+
+    std::pair<EdgeIter, EdgeIter> edges() const {
+        return std::make_pair(edges_begin(), edges_end());
     }
 
     HalfEdgeIter he_iter() const {
@@ -173,6 +242,10 @@ public:
         return HalfEdgeIter(this, HalfEdgeHandle(edges_.size() * 2));
     }
 
+    std::pair<HalfEdgeIter, HalfEdgeIter> halfedges() const {
+        return std::make_pair(halfedges_begin(), halfedges_end());
+    }
+
     FaceIter f_iter() const {
         return FaceIter(this);
     }
@@ -183,6 +256,10 @@ public:
 
     FaceIter faces_end() const {
         return FaceIter(this, FaceHandle(faces_.size()));
+    }
+
+    std::pair<FaceIter, FaceIter> faces() const {
+        return std::make_pair(faces_begin(), faces_end());
     }
 
     HalfFaceIter hf_iter() const {
@@ -197,6 +274,10 @@ public:
         return HalfFaceIter(this, HalfFaceHandle(faces_.size() * 2));
     }
 
+    std::pair<HalfFaceIter, HalfFaceIter> halffaces() const {
+        return std::make_pair(halffaces_begin(), halffaces_end());
+    }
+
     CellIter c_iter() const {
         return CellIter(this);
     }
@@ -209,34 +290,45 @@ public:
         return CellIter(this, CellHandle(cells_.size()));
     }
 
+    std::pair<CellIter, CellIter> cells() const {
+        return std::make_pair(cells_begin(), cells_end());
+    }
+
     /*
      * Virtual functions with implementation
      */
 
     /// Get number of vertices in mesh
-    virtual unsigned int n_vertices()   const { return n_vertices_; }
+    virtual size_t n_vertices()   const { return n_vertices_; }
     /// Get number of edges in mesh
-    virtual unsigned int n_edges()      const { return edges_.size(); }
+    virtual size_t n_edges()      const { return edges_.size(); }
     /// Get number of halfedges in mesh
-    virtual unsigned int n_halfedges()  const { return edges_.size() * 2u; }
+    virtual size_t n_halfedges()  const { return edges_.size() * 2u; }
     /// Get number of faces in mesh
-    virtual unsigned int n_faces()      const { return faces_.size(); }
+    virtual size_t n_faces()      const { return faces_.size(); }
     /// Get number of halffaces in mesh
-    virtual unsigned int n_halffaces()  const { return faces_.size() * 2u; }
+    virtual size_t n_halffaces()  const { return faces_.size() * 2u; }
     /// Get number of cells in mesh
-    virtual unsigned int n_cells()      const { return cells_.size(); }
+    virtual size_t n_cells()      const { return cells_.size(); }
 
-    unsigned int genus() const {
-        return  (1 - (n_vertices() -
+    int genus() const {
+
+        int g = (1 - (n_vertices() -
                       n_edges() +
                       n_faces() -
-                      n_cells())/2.0);
+                      n_cells()));
+
+        if(g % 2 == 0) return (g / 2);
+
+        // An error occured
+        // The mesh might not be manifold
+        return  -1;
     }
 
 private:
 
     // Cache total vertex number
-    unsigned int n_vertices_;
+    size_t n_vertices_;
 
 public:
 
@@ -249,16 +341,24 @@ public:
     virtual EdgeHandle add_edge(const VertexHandle& _fromVertex, const VertexHandle& _toHandle, bool _allowDuplicates = false);
 
     /// Add face via incident edges
+    ///
+    /// \return Handle of the new face, InvalidFaceHandle if \a _halfedges
+    ///         are not connected and \a _topologyCheck is \a true.
+    ///
+    /// \warning If _halfedges are not connected and \a _topologyCheck is \a false,
+    ///          the behavior is undefined.
     virtual FaceHandle add_face(const std::vector<HalfEdgeHandle>& _halfedges, bool _topologyCheck = false);
 
     /// Add face via incident vertices
     virtual FaceHandle add_face(const std::vector<VertexHandle>& _vertices);
 
-	/// Add cell via faces. 
-	/// The orientation of halffaces will be adjucted automatically. 
-	virtual CellHandle add_cell(const std::vector<FaceHandle>& _faces, bool _topologyCheck) ; 
-
     /// Add cell via incident halffaces
+    ///
+    /// \return Handle of the new cell, InvalidCellHandle if \a _topologyCheck is \a true and
+    ///         \a _halffaces are not connected.
+    ///
+    /// \warning If _halffaces are not connected and \a _topologyCheck is \a false,
+    ///          the behavior is undefined.
     virtual CellHandle add_cell(const std::vector<HalfFaceHandle>& _halffaces, bool _topologyCheck = false);
 
     /// Set the vertices of an edge
@@ -304,15 +404,17 @@ public:
     /// Get opposite halfface that corresponds to halfface with handle _halfFaceHandle
     Face opposite_halfface(const HalfFaceHandle& _halfFaceHandle) const;
 
-    // Get halfedge from vertex _vh1 to _vh2
+    /// Get halfedge from vertex _vh1 to _vh2
     HalfEdgeHandle halfedge(const VertexHandle& _vh1, const VertexHandle& _vh2) const;
 
-    // Get half-face from list of incident vertices (in connected order)
-    // Note: Only the first three vertices are checked
+    /// Get half-face from list of incident vertices (in connected order)
+    ///
+    /// \note Only the first three vertices are checked
     HalfFaceHandle halfface(const std::vector<VertexHandle>& _vs) const;
 
-    // Get half-face from list of incident half-edges
-    // Note: Only the first two half-edges are checked
+    /// Get half-face from list of incident half-edges
+    ///
+    /// \note Only the first two half-edges are checked
     HalfFaceHandle halfface(const std::vector<HalfEdgeHandle>& _hes) const;
 
     /// Get next halfedge within a halfface
@@ -322,36 +424,33 @@ public:
     HalfEdgeHandle prev_halfedge_in_halfface(const HalfEdgeHandle& _heh, const HalfFaceHandle& _hfh) const;
 
     /// Get valence of vertex (number of incident edges)
-    inline unsigned int valence(const VertexHandle& _vh) const {
-        if(!v_bottom_up_) {
-            std::cerr << "Could not get vertex valence: No bottom-up incidences for vertices available!" << std::endl;
-            return 0u;
-        }
-        assert((unsigned int)_vh.idx() < outgoing_hes_per_vertex_.size());
+    inline size_t valence(const VertexHandle& _vh) const {
+        assert(has_vertex_bottom_up_incidences());
+        assert(_vh.is_valid() && (size_t)_vh.idx() < outgoing_hes_per_vertex_.size());
+
         return outgoing_hes_per_vertex_[_vh.idx()].size();
     }
 
     /// Get valence of edge (number of incident faces)
-    inline unsigned int valence(const EdgeHandle& _eh) const {
-        if(!e_bottom_up_) {
-            std::cerr << "Could not get edge valence: No bottom-up incidences for edges available!" << std::endl;
-            return 0u;
-        }
-        assert((unsigned int)halfedge_handle(_eh, 0).idx() < incident_hfs_per_he_.size());
+    inline size_t valence(const EdgeHandle& _eh) const {
+        assert(has_edge_bottom_up_incidences());
+        assert(_eh.is_valid() && (size_t)_eh.idx() < edges_.size());
+        assert((size_t)halfedge_handle(_eh, 0).idx() < incident_hfs_per_he_.size());
+
         return incident_hfs_per_he_[halfedge_handle(_eh, 0).idx()].size();
     }
 
     /// Get valence of face (number of incident edges)
-    inline unsigned int valence(const FaceHandle& _fh) const {
+    inline size_t valence(const FaceHandle& _fh) const {
+        assert(_fh.is_valid() && (size_t)_fh.idx() < faces_.size());
 
-        assert((unsigned int)_fh.idx() < faces_.size());
         return face(_fh).halfedges().size();
     }
 
     /// Get valence of cell (number of incident faces)
-    inline unsigned int valence(const CellHandle& _ch) const {
+    inline size_t valence(const CellHandle& _ch) const {
+        assert(_ch.is_valid() && (size_t)_ch.idx() < cells_.size());
 
-        assert((unsigned int)_ch.idx() < cells_.size());
         return cell(_ch).halffaces().size();
     }
 
@@ -532,8 +631,15 @@ public:
             compute_edge_bottom_up_incidences();
 
             if(f_bottom_up_) {
+#if defined(__clang_major__) && (__clang_major__ >= 5)
+                for(EdgeIter e_it = edges_begin(), e_end = edges_end();
+                    e_it != e_end; ++e_it) {
+                    reorder_incident_halffaces(*e_it);
+                }
+#else
                 std::for_each(edges_begin(), edges_end(),
                               fun::bind(&TopologyKernel::reorder_incident_halffaces, this, fun::placeholders::_1));
+#endif
             }
         }
 
@@ -563,8 +669,15 @@ public:
 
         if(updateOrder) {
             if(e_bottom_up_) {
+#if defined(__clang_major__) && (__clang_major__ >= 5)
+                for(EdgeIter e_it = edges_begin(), e_end = edges_end();
+                    e_it != e_end; ++e_it) {
+                    reorder_incident_halffaces(*e_it);
+                }
+#else
                 std::for_each(edges_begin(), edges_end(),
                               fun::bind(&TopologyKernel::reorder_incident_halffaces, this, fun::placeholders::_1));
+#endif
             }
         }
     }
@@ -612,27 +725,36 @@ private:
 
 public:
 
-    /// Get halfface that is adjacent (w.r.t. a common halfedge) within the same cell
+    /// \brief Get halfface that is adjacent (w.r.t. a common halfedge) within the same cell
+    ///
+    /// \return Handle of the adjacent half-face if \a _halfFaceHandle is not
+    ///         at a boundary, \a InvalidHalfFaceHandle otherwise.
+    ///
+    /// \warning The mesh must have face bottom-up incidences.
     HalfFaceHandle adjacent_halfface_in_cell(const HalfFaceHandle& _halfFaceHandle, const HalfEdgeHandle& _halfEdgeHandle) const;
 
     /// Get cell that is incident to the given halfface
     CellHandle incident_cell(const HalfFaceHandle& _halfFaceHandle) const;
 
     bool is_boundary(const HalfFaceHandle& _halfFaceHandle) const {
-        return _halfFaceHandle.idx() >= 0 && (unsigned int)_halfFaceHandle.idx() < incident_cell_per_hf_.size() &&
-                incident_cell_per_hf_[_halfFaceHandle.idx()] == InvalidCellHandle;
+
+        assert(_halfFaceHandle.is_valid() && (size_t)_halfFaceHandle.idx() < faces_.size() * 2u);
+        assert(has_face_bottom_up_incidences());
+        assert((size_t)_halfFaceHandle.idx() < incident_cell_per_hf_.size());
+        return incident_cell_per_hf_[_halfFaceHandle.idx()] == InvalidCellHandle;
     }
 
     bool is_boundary(const FaceHandle& _faceHandle) const {
+        assert(_faceHandle.is_valid() && (size_t)_faceHandle.idx() < faces_.size());
+        assert(has_face_bottom_up_incidences());
         return  is_boundary(halfface_handle(_faceHandle, 0)) ||
                 is_boundary(halfface_handle(_faceHandle, 1));
     }
 
     bool is_boundary(const EdgeHandle& _edgeHandle) const {
-        if(!e_bottom_up_) {
-            std::cerr << "Error: Function is_boundary() needs bottom-up incidences for edges!" << std::endl;
-            return false;
-        }
+        assert(has_edge_bottom_up_incidences());
+        assert(_edgeHandle.is_valid() && (size_t)_edgeHandle.idx() < edges_.size());
+
         for(HalfEdgeHalfFaceIter hehf_it = hehf_iter(halfedge_handle(_edgeHandle, 0));
                 hehf_it.valid(); ++hehf_it) {
             if(is_boundary(face_handle(*hehf_it))) {
@@ -643,10 +765,9 @@ public:
     }
 
     bool is_boundary(const HalfEdgeHandle& _halfedgeHandle) const {
-        if(!e_bottom_up_) {
-            std::cerr << "Error: Function is_boundary() needs bottom-up incidences for edges!" << std::endl;
-            return false;
-        }
+        assert(has_edge_bottom_up_incidences());
+        assert(_halfedgeHandle.is_valid() && (size_t)_halfedgeHandle.idx() < edges_.size() * 2u);
+
         for(HalfEdgeHalfFaceIter hehf_it = hehf_iter(_halfedgeHandle);
                 hehf_it.valid(); ++hehf_it) {
             if(is_boundary(face_handle(*hehf_it))) {
@@ -657,17 +778,17 @@ public:
     }
 
     bool is_boundary(const VertexHandle& _vertexHandle) const {
-        if(!v_bottom_up_) {
-            std::cerr << "Error: Function is_boundary() needs bottom-up incidences for vertices!" << std::endl;
-            return false;
-        }
+        assert(has_vertex_bottom_up_incidences());
+        assert(_vertexHandle.is_valid() && (size_t)_vertexHandle.idx() < n_vertices());
+
         for(VertexOHalfEdgeIter voh_it = voh_iter(_vertexHandle); voh_it.valid(); ++voh_it) {
             if(is_boundary(*voh_it)) return true;
         }
         return false;
     }
 
-    unsigned int n_vertices_in_cell(const CellHandle& _ch) const {
+    size_t n_vertices_in_cell(const CellHandle& _ch) const {
+        assert(_ch.is_valid() && (size_t)_ch.idx() < cells_.size());
 
         std::set<VertexHandle> vertices;
         std::vector<HalfFaceHandle> hfs = cell(_ch).halffaces();
@@ -693,7 +814,6 @@ public:
     }
 
     Face opposite_halfface(const Face& _face) const {
-
         std::vector<HalfEdgeHandle> opp_halfedges;
         for(std::vector<HalfEdgeHandle>::const_iterator it = _face.halfedges().begin(); it
                 != _face.halfedges().end(); ++it) {
@@ -710,33 +830,40 @@ public:
     /// Conversion function
     static inline HalfEdgeHandle halfedge_handle(const EdgeHandle& _h, const unsigned char _subIdx) {
         // Is handle in range?
-        if(_h.idx() < 0 || _subIdx > 1) return InvalidHalfEdgeHandle;
+        assert(_h.is_valid());
+        assert(_subIdx < 2);
+        // if(_h.idx() < 0 || _subIdx > 1) return InvalidHalfEdgeHandle;
         return HalfEdgeHandle((2 * _h.idx()) + (_subIdx ? 1 : 0));
     }
 
     /// Conversion function
     static inline HalfFaceHandle halfface_handle(const FaceHandle& _h, const unsigned char _subIdx) {
         // Is handle in range?
-        if(_h.idx() < 0 || _subIdx > 1) return InvalidHalfFaceHandle;
+        assert(_h.is_valid());
+        assert(_subIdx < 2);
+        // if(_h.idx() < 0 || _subIdx > 1) return InvalidHalfFaceHandle;
         return HalfFaceHandle((2 * _h.idx()) + (_subIdx ? 1 : 0));
     }
-	
+
     /// Handle conversion
     static inline EdgeHandle edge_handle(const HalfEdgeHandle& _h) {
         // Is handle in range?
-        if(_h.idx() < 0) return InvalidEdgeHandle;
+        assert(_h.is_valid());
+        // if(_h.idx() < 0) return InvalidEdgeHandle;
         return EdgeHandle((int)(_h.idx() / 2));
     }
 
     static inline FaceHandle face_handle(const HalfFaceHandle& _h) {
         // Is handle in range?
-        if(_h.idx() < 0) return InvalidFaceHandle;
+        assert(_h.is_valid());
+        // if(_h.idx() < 0) return InvalidFaceHandle;
         return FaceHandle((int)(_h.idx() / 2));
     }
 
     static inline HalfEdgeHandle opposite_halfedge_handle(const HalfEdgeHandle& _h) {
         // Is handle in range?
-        if(_h.idx() < 0) return InvalidHalfEdgeHandle;
+        assert(_h.is_valid());
+        // if(_h.idx() < 0) return InvalidHalfEdgeHandle;
 
         // Is handle even?
         if(_h.idx() % 2 == 0) {
@@ -747,7 +874,8 @@ public:
 
     static inline HalfFaceHandle opposite_halfface_handle(const HalfFaceHandle& _h) {
         // Is handle in range?
-        if(_h.idx() < 0) return InvalidHalfFaceHandle;
+        assert(_h.is_valid());
+        // if(_h.idx() < 0) return InvalidHalfFaceHandle;
 
         // Is handle even?
         if(_h.idx() % 2 == 0) {
@@ -756,10 +884,6 @@ public:
         return HalfFaceHandle(_h.idx() - 1);
     }
 
-	static inline CellHandle cell_handle (const FaceHandle & _h){
-		if (_h.idx() < 0) return InvalidCellHandle; 
-		
-	}
 protected:
 
     // List of edges

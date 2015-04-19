@@ -1,11 +1,14 @@
 cmake_minimum_required (VERSION 2.6)
 
+
 if("${PROJECT_NAME}" STREQUAL "")
     message("Setting project name to OpenVolumeMesh")
     project (OpenVolumeMesh)
+
+    set(CMAKE_MACOSX_RPATH 1)
+
 endif()
 
-# SET(CMAKE_CXX_FLAGS "-DINCLUDE_TEMPLATES")
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 

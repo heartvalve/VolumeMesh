@@ -34,9 +34,9 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 203 $                                                         *
- *   $Date: 2012-05-24 17:42:06 +0200 (Thu, 24 May 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 253 $                                                         *
+ *   $Date: 2013-10-02 10:58:10 +0200 (Wed, 02 Oct 2013) $                    *
+ *   $LastChangedBy: lyon $                                                *
  *                                                                           *
 \*===========================================================================*/
 
@@ -119,6 +119,7 @@ private:
 
     VertexPropertyT<typename GeomKernelT::PointT> v_normals_;
     FacePropertyT<typename GeomKernelT::PointT> f_normals_;
+
 };
 
 } // Namespace OpenVolumeMesh

@@ -73,10 +73,17 @@
      #pragma warning "TR1 not available! Please install Visual Studio Service Pack 1!"
     #endif
    #else
-     // hope for TR1 equivalents
-     #include <tr1/memory>
-     namespace ptr = std::tr1;
-     #define ACG_UNIQUE_POINTER_SUPPORTED 0
+    // hope for TR1 equivalents
+     // check for clang5 but switch to tr1 if clang uses libstdc++
+    #if defined(__clang_major__) && (__clang_major__ >= 5) && !defined(__GLIBCXX__ )
+      // Mavericks special treatment
+      #include <memory>
+      namespace ptr = std;
+    #else
+      #include <tr1/memory>
+      namespace ptr = std::tr1;
+    #endif
+    #define ACG_UNIQUE_POINTER_SUPPORTED 0
    #endif
 #endif
 

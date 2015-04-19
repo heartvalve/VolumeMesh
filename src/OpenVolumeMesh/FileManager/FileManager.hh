@@ -100,54 +100,6 @@ public:
   template <class MeshT>
   bool writeFile(const std::string& _filename, const MeshT& _mesh) const;
 
-
-
-   /**
-	* \brief Read a mesh from the xmsh file
-	* @param _filename The file that is to be read. 
-	* @param _mesh     A reference to an OpenVolumeMesh instance
-	*/
-   template <typename MeshT>
-   bool readXmsh (const std::string& _filename, MeshT & _mesh, 
-				  bool _topologyCheck = true, 
-				  bool _computeBottomUpIncidences = true )  ; 
-
-
-	/**
-	 * \brief Read a mesh from a stream. 
-	 * @param _ostr     The input stream
-	 * @param _mesh     A reference to an OpenVolumeMesh instance
-	 */
-   template <typename MeshT>
-   bool readXmsh (std::istream & _ostr, MeshT & _mesh, 
-				  bool _topologyCheck = true, 
-				  bool _computeBottomUpIncidences = true )  ; 
-
-   /**
-	* \brief Write a mesh to the xmsh file
-	* @param _filename The file that is to be written. 
-	* @param _mesh     A constant reference to an OpenVolumeMesh instance 
-	*/
-  template <class MeshT>
-  bool writeXmsh(const std::string& _filename, const MeshT& _mesh) const;
-
-
-   /**
-	* \brief Write a mesh to the xmsh file
-	* @param _ostr     The stream to be written. 
-	* @param _mesh     A constant reference to an OpenVolumeMesh instance 
-	*/
-  template <class MeshT>
-  bool writeXmsh(std::ostream & _ostr, const MeshT& _mesh) const;
-      
-   /**
-	* \brief outpu the boundary in the off format, which is a two-manifold. 
-	* @param _ostr     The stream to be written. 
-	* @param _mesh     A constant reference to an OpenVolumeMesh instance
-    */
-  template <class MeshT>
-  bool writeBoundaryOff(std::ostream & _ostr, const MeshT& _mesh) const;
-
   /**
    * \brief Test whether given file contains a hexahedral mesh
    */

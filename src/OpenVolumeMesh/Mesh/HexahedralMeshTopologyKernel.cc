@@ -34,9 +34,9 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 210 $                                                         *
- *   $Date: 2012-06-08 14:09:44 +0200 (Fri, 08 Jun 2012) $                    *
- *   $LastChangedBy: moebius $                                                *
+ *   $Revision: 257 $                                                         *
+ *   $Date: 2013-12-04 15:29:31 +0100 (Wed, 04 Dec 2013) $                    *
+ *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
 
@@ -62,7 +62,10 @@ HexahedralMeshTopologyKernel::~HexahedralMeshTopologyKernel() {
 FaceHandle HexahedralMeshTopologyKernel::add_face(const std::vector<HalfEdgeHandle>& _halfedges, bool _topologyCheck) {
 
     if(_halfedges.size() != 4) {
-        std::cerr << "Face valence is not four! Aborting." << std::endl;
+#ifndef NDEBUG
+        std::cerr << "HexahedralMeshTopologyKernel::add_face(): Face valence is not four! Returning" << std::endl;
+        std::cerr << "invalid handle." << std::endl;
+#endif
         return TopologyKernel::InvalidFaceHandle;
     }
 
@@ -76,7 +79,10 @@ FaceHandle
 HexahedralMeshTopologyKernel::add_face(const std::vector<VertexHandle>& _vertices) {
 
     if(_vertices.size() != 4) {
-        std::cerr << "Face valence is not four! Aborting." << std::endl;
+#ifndef NDEBUG
+        std::cerr << "HexahedralMeshTopologyKernel::add_face(): Face valence is not four! Returning" << std::endl;
+        std::cerr << "invalid handle." << std::endl;
+#endif
         return TopologyKernel::InvalidFaceHandle;
     }
 
@@ -89,19 +95,22 @@ HexahedralMeshTopologyKernel::add_face(const std::vector<VertexHandle>& _vertice
 CellHandle
 HexahedralMeshTopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halffaces, bool _topologyCheck) {
 
-#ifndef NDEBUG
     if(_halffaces.size() != 6) {
+// To make this consistent with add_face
+#ifndef NDEBUG
         std::cerr << "Cell valence is not six! Aborting." << std::endl;
+#endif
         return TopologyKernel::InvalidCellHandle;
     }
     for(std::vector<HalfFaceHandle>::const_iterator it = _halffaces.begin();
             it != _halffaces.end(); ++it) {
         if(TopologyKernel::halfface(*it).halfedges().size() != 4) {
+#ifndef NDEBUG
             std::cerr << "Incident face does not have valence four! Aborting." << std::endl;
+#endif
             return TopologyKernel::InvalidCellHandle;
         }
     }
-#endif
 
     // Create new halffaces vector
     std::vector<HalfFaceHandle> ordered_halffaces;
@@ -114,7 +123,9 @@ HexahedralMeshTopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halff
 
         if(!ordered) {
 
+#ifndef NDEBUG
             std::cerr << "The specified half-faces are not in correct order. Trying automatic re-ordering." << std::endl;
+#endif
 
             // Ordering array (see below for details)
             const int orderTop[] = {2, 4, 3, 5};
@@ -133,7 +144,9 @@ HexahedralMeshTopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halff
 
                 HalfFaceHandle ahfh = get_adjacent_halfface(ordered_halffaces[0], *he_it, _halffaces);
                 if(ahfh == TopologyKernel::InvalidHalfFaceHandle) {
+#ifndef NDEBUG
                     std::cerr << "The current halfface is invalid!" << std::endl;
+#endif
                     continue;
                 }
                 ordered_halffaces[orderTop[idx]] = ahfh;
@@ -152,7 +165,9 @@ HexahedralMeshTopologyKernel::add_cell(const std::vector<HalfFaceHandle>& _halff
             if(cur_hf != TopologyKernel::InvalidHalfFaceHandle) {
                 ordered_halffaces[1] = cur_hf;
             } else {
+#ifndef NDEBUG
                 std::cerr << "The current halfface is invalid!" << std::endl;
+#endif
                 return TopologyKernel::InvalidCellHandle;
             }
 
@@ -222,14 +237,18 @@ bool HexahedralMeshTopologyKernel::check_halfface_ordering(const std::vector<Hal
         } else {
             offsetTop = (offsetTop + 1) % 4;
             if(ahfh != _hfs[orderTop[offsetTop]]) {
+#ifndef NDEBUG
                 std::cerr << "Faces not in right order!" << std::endl;
+#endif
                 return false;
             }
         }
     }
 
     if(offsetTop == -1) {
+#ifndef NDEBUG
         std::cerr << "Faces not in right order!" << std::endl;
+#endif
         return false;
     }
 
@@ -247,14 +266,18 @@ bool HexahedralMeshTopologyKernel::check_halfface_ordering(const std::vector<Hal
         } else {
             offsetBot = (offsetBot + 1) % 4;
             if(ahfh != _hfs[orderBot[offsetBot]]) {
+#ifndef NDEBUG
                 std::cerr << "Faces not in right order!" << std::endl;
+#endif
                 return false;
             }
         }
     }
 
     if(offsetBot == -1) {
+#ifndef NDEBUG
         std::cerr << "Faces not in right order!" << std::endl;
+#endif
         return false;
     }
 
@@ -264,21 +287,22 @@ bool HexahedralMeshTopologyKernel::check_halfface_ordering(const std::vector<Hal
 //========================================================================================
 
 CellHandle
-HexahedralMeshTopologyKernel::add_cell(const std::vector<VertexHandle>& _vertices) {
+HexahedralMeshTopologyKernel::add_cell(const std::vector<VertexHandle>& _vertices, bool _topologyCheck) {
 
+    // debug mode checks
+    assert(TopologyKernel::has_full_bottom_up_incidences());
     assert(_vertices.size() == 8);
 
+    // release mode checks
     if(!TopologyKernel::has_full_bottom_up_incidences()) {
-        std::cerr << "Error: This function needs bottom-up incidences to be enabled!" << std::endl;
         return CellHandle(-1);
     }
 
     if(_vertices.size() != 8) {
-        std::cerr << "The number of vertices is not eight!" << std::endl;
         return CellHandle(-1);
     }
 
-    HalfFaceHandle hf0, hf1, hf2, hf3, hf4, hf5, hf6, hf7;
+    HalfFaceHandle hf0, hf1, hf2, hf3, hf4, hf5;
 
     std::vector<VertexHandle> vs;
 
@@ -375,11 +399,59 @@ HexahedralMeshTopologyKernel::add_cell(const std::vector<VertexHandle>& _vertice
     assert(hf0.is_valid()); assert(hf1.is_valid()); assert(hf2.is_valid());
     assert(hf3.is_valid()); assert(hf4.is_valid()); assert(hf5.is_valid());
 
+
     std::vector<HalfFaceHandle> hfs;
     hfs.push_back(hf0); hfs.push_back(hf1); hfs.push_back(hf2);
     hfs.push_back(hf3); hfs.push_back(hf4); hfs.push_back(hf5);
 
-    return TopologyKernel::add_cell(hfs,false);
+    if (_topologyCheck) {
+        /*
+        * Test if all halffaces are connected and form a two-manifold
+        * => Cell is closed
+        *
+        * This test is simple: The number of involved half-edges has to be
+        * exactly twice the number of involved edges.
+        */
+
+        std::set<HalfEdgeHandle> incidentHalfedges;
+        std::set<EdgeHandle>     incidentEdges;
+
+        for(std::vector<HalfFaceHandle>::const_iterator it = hfs.begin(),
+                end = hfs.end(); it != end; ++it) {
+
+            OpenVolumeMeshFace hface = halfface(*it);
+            for(std::vector<HalfEdgeHandle>::const_iterator he_it = hface.halfedges().begin(),
+                    he_end = hface.halfedges().end(); he_it != he_end; ++he_it) {
+                incidentHalfedges.insert(*he_it);
+                incidentEdges.insert(edge_handle(*he_it));
+            }
+        }
+
+        if(incidentHalfedges.size() != (incidentEdges.size() * 2u)) {
+#ifndef NDEBUG
+            std::cerr << "The specified halffaces are not connected!" << std::endl;
+#endif
+            return InvalidCellHandle;
+        }
+        // The halffaces are now guaranteed to form a two-manifold
+
+        if(has_face_bottom_up_incidences()) {
+
+            for(std::vector<HalfFaceHandle>::const_iterator it = hfs.begin(),
+                    end = hfs.end(); it != end; ++it) {
+                if(incident_cell(*it) != InvalidCellHandle) {
+#ifndef NDEBUG
+                    std::cerr << "Warning: One of the specified half-faces is already incident to another cell!" << std::endl;
+#endif
+                    return InvalidCellHandle;
+                }
+            }
+
+        }
+
+    }
+
+    return TopologyKernel::add_cell(hfs, false);
 }
 
 //========================================================================================

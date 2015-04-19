@@ -34,9 +34,9 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 216 $                                                         *
- *   $Date: 2012-07-18 10:27:26 +0200 (Wed, 18 Jul 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 261 $                                                         *
+ *   $Date: 2014-03-28 14:51:14 +0100 (Fri, 28 Mar 2014) $                    *
+ *   $LastChangedBy: lyon $                                                *
  *                                                                           *
 \*===========================================================================*/
 
@@ -54,11 +54,13 @@ namespace OpenVolumeMesh {
 
 
 CellSheetCellIter::CellSheetCellIter(const CellHandle& _ref_h,
-        const unsigned char _orthDir, const HexahedralMeshTopologyKernel* _mesh) :
-BaseIter(_mesh, _ref_h) {
+        const unsigned char _orthDir, const HexahedralMeshTopologyKernel* _mesh, int _max_laps) :
+BaseIter(_mesh, _ref_h, _max_laps) {
 
     if(!_mesh->has_face_bottom_up_incidences()) {
+#ifndef NDEBUG
         std::cerr << "This iterator needs bottom-up incidences!" << std::endl;
+#endif
         BaseIter::valid(false);
         return;
     }
@@ -72,40 +74,53 @@ BaseIter(_mesh, _ref_h) {
 				_mesh->orientation(*hf_it, _ref_h) != _mesh->opposite_orientation(_orthDir)) {
 			CellHandle ch = _mesh->incident_cell(_mesh->opposite_halfface_handle(*hf_it));
 			if(ch != TopologyKernel::InvalidCellHandle) {
-				neighb_sheet_cell_hs_.insert(ch);
+                neighb_sheet_cell_hs_.push_back(ch);
 			}
 		}
 	}
 
-	cur_it_ = neighb_sheet_cell_hs_.begin();
-	BaseIter::valid(cur_it_ != neighb_sheet_cell_hs_.end());
+    // Remove all duplicate entries
+    std::sort(neighb_sheet_cell_hs_.begin(), neighb_sheet_cell_hs_.end());
+    neighb_sheet_cell_hs_.resize(std::unique(neighb_sheet_cell_hs_.begin(), neighb_sheet_cell_hs_.end()) - neighb_sheet_cell_hs_.begin());
+
+    cur_index_ = 0;
+    BaseIter::valid(neighb_sheet_cell_hs_.size() > 0);
 	if(BaseIter::valid()) {
-		BaseIter::cur_handle(*cur_it_);
+        BaseIter::cur_handle(neighb_sheet_cell_hs_[cur_index_]);
 	}
 }
 
 
 CellSheetCellIter& CellSheetCellIter::operator--() {
 
-    if(cur_it_ == neighb_sheet_cell_hs_.begin()) {
-        BaseIter::valid(false);
+    if (cur_index_ == 0) {
+        cur_index_ = neighb_sheet_cell_hs_.size() - 1;
+        --lap_;
+        if (lap_ < 0)
+            BaseIter::valid(false);
     } else {
-        --cur_it_;
-        BaseIter::cur_handle(*cur_it_);
+        --cur_index_;
     }
+
+    BaseIter::cur_handle(neighb_sheet_cell_hs_[cur_index_]);
+
     return *this;
 }
 
 
 CellSheetCellIter& CellSheetCellIter::operator++() {
 
-    ++cur_it_;
-	if(cur_it_ != neighb_sheet_cell_hs_.end()) {
-		BaseIter::cur_handle(*cur_it_);
-	} else {
-		BaseIter::valid(false);
+    ++cur_index_;
+    if(cur_index_ == neighb_sheet_cell_hs_.size()) {
+        cur_index_ = 0;
+        ++lap_;
+        if (lap_ >= max_laps_)
+            BaseIter::valid(false);
 	}
-	return *this;
+
+    BaseIter::cur_handle(neighb_sheet_cell_hs_[cur_index_]);
+
+    return *this;
 }
 
 //================================================================================================
@@ -114,11 +129,13 @@ CellSheetCellIter& CellSheetCellIter::operator++() {
 
 
 HalfFaceSheetHalfFaceIter::HalfFaceSheetHalfFaceIter(const HalfFaceHandle& _ref_h,
-        const HexahedralMeshTopologyKernel* _mesh) :
-BaseIter(_mesh, _ref_h) {
+        const HexahedralMeshTopologyKernel* _mesh, int _max_laps) :
+BaseIter(_mesh, _ref_h, _max_laps) {
 
 	if(!_mesh->has_face_bottom_up_incidences()) {
+#ifndef NDEBUG
         std::cerr << "This iterator needs bottom-up incidences!" << std::endl;
+#endif
         BaseIter::valid(false);
         return;
     }
@@ -135,7 +152,9 @@ BaseIter(_mesh, _ref_h) {
 	 */
 
 	if(_mesh->is_boundary(_ref_h)) {
+#ifndef NDEBUG
 		std::cerr << "HalfFaceSheetHalfFaceIter: HalfFace is boundary!" << std::endl;
+#endif
 		BaseIter::valid(false);
         return;
 	}
@@ -167,38 +186,44 @@ BaseIter(_mesh, _ref_h) {
 		}
 	}
 
-	cur_it_ = adjacent_halffaces_.begin();
-	edge_it_ = common_edges_.begin();
-    BaseIter::valid(cur_it_ != adjacent_halffaces_.end());
+    cur_index_ = 0;
+    BaseIter::valid(adjacent_halffaces_.size() > 0);
     if(BaseIter::valid()) {
-    	BaseIter::cur_handle(*cur_it_);
+        BaseIter::cur_handle(adjacent_halffaces_[cur_index_]);
     }
 }
 
 
 HalfFaceSheetHalfFaceIter& HalfFaceSheetHalfFaceIter::operator--() {
 
-    --cur_it_;
-    --edge_it_;
-    if(cur_it_ >= adjacent_halffaces_.begin()) {
-		BaseIter::cur_handle(*cur_it_);
-	} else {
-		BaseIter::valid(false);
-	}
+    if (cur_index_ == 0) {
+        cur_index_ = adjacent_halffaces_.size() - 1;
+        --lap_;
+        if (lap_ < 0)
+            BaseIter::valid(false);
+    } else {
+        --cur_index_;
+    }
+
+    BaseIter::cur_handle(adjacent_halffaces_[cur_index_]);
+
     return *this;
 }
 
 
 HalfFaceSheetHalfFaceIter& HalfFaceSheetHalfFaceIter::operator++() {
 
-    ++cur_it_;
-    ++edge_it_;
-	if(cur_it_ != adjacent_halffaces_.end()) {
-		BaseIter::cur_handle(*cur_it_);
-	} else {
-		BaseIter::valid(false);
-	}
-	return *this;
+    ++cur_index_;
+    if(cur_index_ == adjacent_halffaces_.size()) {
+        cur_index_ = 0;
+        ++lap_;
+        if (lap_ >= max_laps_)
+            BaseIter::valid(false);
+    }
+
+    BaseIter::cur_handle(adjacent_halffaces_[cur_index_]);
+
+    return *this;
 }
 
 //================================================================================================
@@ -207,8 +232,8 @@ HalfFaceSheetHalfFaceIter& HalfFaceSheetHalfFaceIter::operator++() {
 
 
 HexVertexIter::HexVertexIter(const CellHandle& _ref_h,
-        const HexahedralMeshTopologyKernel* _mesh) :
-BaseIter(_mesh, _ref_h) {
+        const HexahedralMeshTopologyKernel* _mesh, int _max_laps) :
+BaseIter(_mesh, _ref_h, _max_laps) {
 
     assert(_ref_h.is_valid());
     assert(_mesh->cell(_ref_h).halffaces().size() == 6);
@@ -256,34 +281,43 @@ BaseIter(_mesh, _ref_h) {
 
     vertices_.push_back(_mesh->halfedge(curHE).from_vertex());
 
-    cur_it_ = vertices_.begin();
-    BaseIter::valid(cur_it_ != vertices_.end());
+    cur_index_ = 0;
+    BaseIter::valid(vertices_.size() > 0);
     if(BaseIter::valid()) {
-        BaseIter::cur_handle(*cur_it_);
+        BaseIter::cur_handle(vertices_[cur_index_]);
     }
 }
 
 
 HexVertexIter& HexVertexIter::operator--() {
 
-    --cur_it_;
-    if(cur_it_ >= vertices_.begin()) {
-        BaseIter::cur_handle(*cur_it_);
+    if (cur_index_ == 0) {
+        cur_index_ = vertices_.size() - 1;
+        --lap_;
+        if (lap_ < 0)
+            BaseIter::valid(false);
     } else {
-        BaseIter::valid(false);
+        --cur_index_;
     }
+
+    BaseIter::cur_handle(vertices_[cur_index_]);
+
     return *this;
 }
 
 
 HexVertexIter& HexVertexIter::operator++() {
 
-    ++cur_it_;
-    if(cur_it_ != vertices_.end()) {
-        BaseIter::cur_handle(*cur_it_);
-    } else {
-        BaseIter::valid(false);
+    ++cur_index_;
+    if(cur_index_ == vertices_.size()) {
+        cur_index_ = 0;
+        ++lap_;
+        if (lap_ >= max_laps_)
+            BaseIter::valid(false);
     }
+
+    BaseIter::cur_handle(vertices_[cur_index_]);
+
     return *this;
 }
 

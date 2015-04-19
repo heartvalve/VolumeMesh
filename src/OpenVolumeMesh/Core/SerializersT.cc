@@ -34,44 +34,91 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 115 $                                                         *
- *   $Date: 2012-02-24 10:42:21 +0100 (Fri, 24 Feb 2012) $                    *
+ *   $Revision: 236 $                                                         *
+ *   $Date: 2013-02-19 12:32:33 +0100 (Tue, 19 Feb 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
 
-#ifndef HEXAHEDRALMESH_HH_
-#define HEXAHEDRALMESH_HH_
+#define SERIALIZERST_CC
 
-#include "HexahedralMeshTopologyKernel.hh"
-#include "../Core/GeometryKernel.hh"
+#include "Serializers.hh"
 
-namespace OpenVolumeMesh {
 
-/*
- * Predefines for most common mesh types
- */
-typedef GeometryKernel<Geometry::Vec2i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2i;
-typedef GeometryKernel<Geometry::Vec2ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2ui;
-typedef GeometryKernel<Geometry::Vec2f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2f;
-typedef GeometryKernel<Geometry::Vec2d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2d;
-typedef GeometryKernel<Geometry::Vec2c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2c;
-typedef GeometryKernel<Geometry::Vec2uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2uc;
-typedef GeometryKernel<Geometry::Vec3i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3i;
-typedef GeometryKernel<Geometry::Vec3ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3ui;
-typedef GeometryKernel<Geometry::Vec3f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3f;
-typedef GeometryKernel<Geometry::Vec3d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3d;
-typedef GeometryKernel<Geometry::Vec3c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3c;
-typedef GeometryKernel<Geometry::Vec3uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3uc;
-typedef GeometryKernel<Geometry::Vec4i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4i;
-typedef GeometryKernel<Geometry::Vec4ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4ui;
-typedef GeometryKernel<Geometry::Vec4f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4f;
-typedef GeometryKernel<Geometry::Vec4d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4d;
-typedef GeometryKernel<Geometry::Vec4c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4c;
-typedef GeometryKernel<Geometry::Vec4uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4uc;
+namespace OpenVolumeMesh
+{
 
-typedef HexahedralMeshTopologyKernel TopologicHexahedralMesh;
 
-} // Namespace OpenVolumeMesh
+template <typename ValueT>
+std::ostream& serialize(std::ostream& _ostr, const ValueT& _rhs)
+{
+    _ostr << _rhs;
+    return _ostr;
+}
 
-#endif /* HEXAHEDRALMESH_HH_ */
+
+template <typename ValueT>
+std::istream& deserialize(std::istream& _istr, ValueT& _rhs)
+{
+    _istr >> _rhs;
+    return _istr;
+}
+
+
+template <typename KeyT, typename ValueT>
+std::ostream& operator<<(std::ostream& os, const std::map< KeyT, ValueT >& rhs)
+{
+    os << rhs.size() << std::endl;
+    for (typename std::map< KeyT, ValueT >::const_iterator it = rhs.begin();
+         it != rhs.end();
+         ++it)
+    {
+        serialize(os,it->first) << std::endl;
+        serialize(os, it->second) << std::endl;
+    }
+
+    return os;
+}
+
+template <typename KeyT, typename ValueT>
+std::istream& operator>>(std::istream& is, std::map< KeyT, ValueT >& rhs)
+{
+
+    size_t size;
+    is >> size;
+    rhs.clear();
+    for (size_t i=0; i<size; i++)
+    {
+        KeyT key;
+        ValueT value;
+        deserialize(is, key);
+        deserialize(is, value);
+        rhs[key] = value;
+    }
+
+    return is;
+}
+
+template <typename ValueT>
+std::ostream& operator<<(std::ostream& _ostr, const std::vector< ValueT >& _rhs)
+{
+    _ostr << _rhs.size() << std::endl;
+    for (size_t i = 0; i < _rhs.size(); ++i)
+        serialize(_ostr, _rhs[i]) << std::endl;
+    return _ostr;
+}
+
+template <typename ValueT>
+std::istream& operator>>(std::istream& _istr, std::vector< ValueT >& _rhs)
+{
+    size_t size;
+    _istr >> size;
+    _rhs.resize(size);
+    for (size_t i=0; i<size; i++)
+        deserialize(_istr,_rhs[i]);
+
+    return _istr;
+}
+
+
+}

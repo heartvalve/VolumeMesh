@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 197 $                                                         *
- *   $Date: 2012-05-11 13:44:53 +0200 (Fri, 11 May 2012) $                    *
+ *   $Revision: 263 $                                                         *
+ *   $Date: 2014-04-02 12:11:52 +0200 (Wed, 02 Apr 2014) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -58,6 +58,8 @@ namespace OpenVolumeMesh {
 
 namespace IO {
 
+using namespace OpenVolumeMesh::Geometry;
+
 //==================================================
 
 template <class MeshT>
@@ -78,9 +80,8 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
     unsigned int c = 0u;
     typedef typename MeshT::PointT Point;
     Point v = Point(0.0, 0.0, 0.0);
-    unsigned int v1 = 0; unsigned int v2 = 0;
 
-    _mesh.clear();
+    _mesh.clear(false);
     // Temporarily disable bottom-up incidences
     // since it's way faster to first add all the
     // geometry and compute them in one pass afterwards
@@ -177,6 +178,8 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
         // Read in edges
         for(unsigned int i = 0u; i < c; ++i) {
 
+        	unsigned int v1 = 0;
+        	unsigned int v2 = 0;
             getCleanLine(iff, line);
             sstr.clear();
             sstr.str(line);
@@ -221,6 +224,8 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
 
             // Read half-edge indices
             for(unsigned int e = 0; e < val; ++e) {
+
+            	unsigned int v1 = 0;
                 sstr >> v1;
                 hes.push_back(HalfEdgeHandle(v1));
             }
@@ -264,6 +269,8 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
 
             // Read half-face indices
             for(unsigned int f = 0; f < val; ++f) {
+
+            	unsigned int v1 = 0;
                 sstr >> v1;
                 hfs.push_back(HalfFaceHandle(v1));
             }
@@ -271,6 +278,7 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
             _mesh.add_cell(hfs, _topologyCheck);
         }
     }
+
     while(!iff.eof()) {
         // "End of file reached while searching for input!"
         // is thrown here. \TODO Fix it!
@@ -278,6 +286,7 @@ bool FileManager::readFile(const std::string& _filename, MeshT& _mesh,
         // Read property
         readProperty(iff, _mesh);
     }
+
     iff.close();
 
     if(_computeBottomUpIncidences) {
@@ -327,6 +336,24 @@ void FileManager::readProperty(std::istream& _iff, MeshT& _mesh) const {
     else if(prop_t == typeName<float>()) generateGenericProperty<float, MeshT>(entity_t, name, _iff, _mesh);
     else if(prop_t == typeName<double>()) generateGenericProperty<double, MeshT>(entity_t, name, _iff, _mesh);
     else if(prop_t == typeName<std::string>()) generateGenericProperty<std::string, MeshT>(entity_t, name, _iff, _mesh);
+
+    else if(prop_t == typeName<Vec2f>()) generateGenericProperty<Vec2f, MeshT>(entity_t, name, _iff, _mesh);
+    else if(prop_t == typeName<Vec2d>()) generateGenericProperty<Vec2d, MeshT>(entity_t, name, _iff, _mesh);
+    else if(prop_t == typeName<Vec2i>()) generateGenericProperty<Vec2i, MeshT>(entity_t, name, _iff, _mesh);
+    else if(prop_t == typeName<Vec2ui>()) generateGenericProperty<Vec2ui, MeshT>(entity_t, name, _iff, _mesh);
+
+    else if(prop_t == typeName<Vec3f>()) generateGenericProperty<Vec3f, MeshT>(entity_t, name, _iff, _mesh);
+    else if(prop_t == typeName<Vec3d>()) generateGenericProperty<Vec3d, MeshT>(entity_t, name, _iff, _mesh);
+    else if(prop_t == typeName<Vec3i>()) generateGenericProperty<Vec3i, MeshT>(entity_t, name, _iff, _mesh);
+    else if(prop_t == typeName<Vec3ui>()) generateGenericProperty<Vec3ui, MeshT>(entity_t, name, _iff, _mesh);
+
+    else if(prop_t == typeName<Vec4f>()) generateGenericProperty<Vec4f, MeshT>(entity_t, name, _iff, _mesh);
+	else if(prop_t == typeName<Vec4d>()) generateGenericProperty<Vec4d, MeshT>(entity_t, name, _iff, _mesh);
+	else if(prop_t == typeName<Vec4i>()) generateGenericProperty<Vec4i, MeshT>(entity_t, name, _iff, _mesh);
+	else if(prop_t == typeName<Vec4ui>()) generateGenericProperty<Vec4ui, MeshT>(entity_t, name, _iff, _mesh);
+
+
+
 }
 
 //==================================================
@@ -370,6 +397,7 @@ void FileManager::generateGenericProperty(const std::string& _entity_t, const st
 
 template<class MeshT>
 bool FileManager::writeFile(const std::string& _filename, const MeshT& _mesh) const {
+
     typedef typename MeshT::Face Face;
     std::ofstream off(_filename.c_str(), std::ios::out);
 
@@ -472,8 +500,6 @@ bool FileManager::writeFile(const std::string& _filename, const MeshT& _mesh) co
     return true;
 }
 
-
-
 //==================================================
 
 template<class IteratorT>
@@ -487,212 +513,13 @@ void FileManager::writeProps(std::ostream& _ostr, const IteratorT& _begin, const
             std::cerr << "Serialization of anonymous properties is not supported!" << std::endl;
             continue;
         }
+
+        _ostr << (*p_it)->entityType() << " ";
+        _ostr << (*p_it)->typeNameWrapper() << " ";
+        _ostr << "\"" << (*p_it)->name() << "\"" << std::endl;
+
         (*p_it)->serialize(_ostr);
     }
-}
-
-//=================================================
-
-template <class MeshT>
-bool FileManager::readXmsh(const std::string& _filename, MeshT& _mesh,
-    bool _topologyCheck, bool _computeBottomUpIncidences)  {
-    std::ifstream iff(_filename.c_str(), std::ios::in);
-	this->readXmsh(iff, _mesh, _topologyCheck, _computeBottomUpIncidences ); 
-	iff.close(); 
-}
-
-//=================================================
-
-template <typename MeshT>
-bool FileManager::readXmsh (std::istream & iff, MeshT & _mesh, 
-				   bool _topologyCheck , 
-				   bool _computeBottomUpIncidences ) 
-{
-    typedef typename MeshT::PointT Point;
-
-    if(!iff.good()) {
-        std::cerr << "Error: Could not open the stream for reading!" << std::endl;
-//        iff.close();
-        return false;
-    }
-
-	Point v = Point (0, 0, 0); // vertex cache 
-
-    std::string line;
-	while (std::getline(iff, line))
-	{
-		std::stringstream sstr(line.c_str()); 
-		std::string tag ;
-		sstr >> tag ; 
-		if (tag == "v")
-		{
-			sstr >> v[0] >> v[1] >> v[2] ; 
-			_mesh.add_vertex(v); 
-		}
-		if (tag == "f")
-		{
-			std::string substr ;
-			std::vector<VertexHandle> vf; 
-			while (sstr >> substr) 
-			{
-				// string to long
-				std::stringstream sstr2 (substr.c_str());
-				{
-					unsigned idx ;
-					sstr2 >> idx ;
-					vf.push_back(VertexHandle(idx )) ;
-				}
-			}
-			_mesh.add_face(vf); 
-		}
-		if (tag == "c")
-		{
-			std::string substr ;
-			std::vector<HalfFaceHandle> hfh; 
-			std::vector<FaceHandle>  fh  ; 
-			while (sstr >> substr) 
-			{
-				// string to long
-				std::stringstream sstr2 (substr.c_str());
-				{
-					unsigned idx ;
-					sstr2 >> idx ;
-					fh.push_back(FaceHandle(idx)); 
-				}
-			}
-
-			// 1) compute the ceter of the polytope (cell)
-			std::set <unsigned> v_set; 
-			for (std::vector <FaceHandle>::const_iterator iter = fh.begin(); 
-				 iter != fh.end(); ++iter )
-			{
-				HalfFaceHandle candidate = _mesh.halfface_handle (*iter, 1) ; 
-				for (HalfFaceVertexIter hfv_it (candidate, & _mesh); hfv_it.valid(); ++hfv_it)
-				{
-					v_set.insert (hfv_it->idx()); 
-				}				
-			}
-			// tetrahedra now. 
-//			assert (v_set.size() == 4) ; 
-
-			Point center (0,0,0) ; 
-			for (std::set <unsigned> ::const_iterator iter = v_set.begin(); iter != v_set.end(); ++iter ) 
-			{
-				center += _mesh.vertex (VertexHandle(*iter)) ; 
-			}
-			center /= v_set.size(); 
-
-			// 2) Decide the correct orientation of the face. 
-			for (std::vector <FaceHandle>::const_iterator iter = fh.begin(); 
-				 iter != fh.end(); ++iter )
-			{
-				HalfFaceHandle candidate = _mesh.halfface_handle (*iter, 1) ; 
-				// we use 4-predicate to decide the orientation of the halfface. 
-				unsigned counter = 0; 
-				std::vector <Point> orientation(4) ; 
-				for (HalfFaceVertexIter hfv_it (candidate, & _mesh); hfv_it.valid() && counter < 3 ; ++hfv_it)
-				{
-					orientation [counter] = _mesh.vertex(hfv_it->idx()) ; 
-					counter ++; 
-				}
-				orientation[counter] = center ; 
-				
-				int orient = _mesh.orient3d(orientation[0], orientation[1], orientation[2], orientation[3]) ; 
-				if (orient > 0) hfh.push_back(candidate);
-				else hfh.push_back(_mesh.halfface_handle (*iter, 0));  
-			}
-			_mesh.add_cell(hfh);
-		}
-	}
-
-	return true; 
-}
-
-
-template <class MeshT>
-bool FileManager::writeXmsh(const std::string& _filename, const MeshT& _mesh) const{
-    std::ofstream off(_filename.c_str(), std::ios::out);
-	this->writeXmsh (off, _mesh) ; 
-	off.close(); 
-}
-
-//=================================================
-
-template <class MeshT>
-bool FileManager::writeXmsh(std::ostream & off, const MeshT& _mesh) const{
-
-    typedef typename MeshT::Face Face;
-    typedef typename MeshT::PointT Point;
-
-//    std::ofstream off(_filename.c_str(), std::ios::out);
-
-    if(!off.good()) {
-//        std::cerr << "Error: Could not open file " << _filename << " for writing!" << std::endl;
-//        off.close();
-        return false;
-    }
-	// write vertices 
-    for(VertexIter v_it = _mesh.v_iter(); v_it; ++v_it) {
-
-        Point v = _mesh.vertex(*v_it);
-        off << "v " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-    }
-
-    // write faces : face cites the vertex indices. 
-    for(FaceIter f_it = _mesh.f_iter(); f_it; ++f_it) {
-
-        HalfFaceHandle hf = _mesh.halfface_handle(*f_it, 0) ; 
-		off <<"f " ; 
-		for (OpenVolumeMesh::HalfFaceVertexIter hfv_it (hf, & _mesh) ; hfv_it.valid(); ++hfv_it)
-		{
-			off<<hfv_it->idx()<<' ' ; 
-		}
-		off<<std::endl; 
-    }
-
-	// write cell : cell cites the face indices. 
-
-	for (CellIter c_it = _mesh.c_iter(); c_it ; ++ c_it )
-	{
-		off<<"c " ; 
-		const std::vector <HalfFaceHandle>  & hf = _mesh.cell(*c_it).halffaces(); 
-		for (unsigned i = 0; i < hf.size(); ++i) 
-		{
-			off << _mesh.face_handle (hf[i]).idx()<<' ' ; 
-		}
-		off<<std::endl; 
-	}
-//	off.close(); 
-	return true; 
-}
-
-//==================================================
-template <class MeshT>
-bool FileManager::writeBoundaryOff(std::ostream & ostr, const MeshT& _mesh) const{
-
-	// FIX. Need to trim redundant vertices. 
-    if(!ostr.good()) {
-        std::cerr << "Error: Could not open stream for writing!" << std::endl;
-        return false;
-    }
-
-    typedef typename MeshT::PointT Point;
-    for(VertexIter v_it = _mesh.v_iter(); v_it; ++v_it) {
-
-        Point v = _mesh.vertex(*v_it);
-		std::cout << "v " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-    }
-	for (BoundaryFaceIter bfi (&_mesh) ; bfi.valid(); ++bfi )
-	{
-		HalfFaceHandle hfh = _mesh.halfface_handle (*bfi, 1) ; 
-		ostr<<"f " ; 
-		for (HalfFaceVertexIter hfv_it (hfh, & _mesh); hfv_it.valid() ; ++hfv_it)
-		{
-			ostr<<hfv_it->idx()+1<<' '; 
-		}
-		ostr<<std::endl; 		
-	}
-	return true; 
 }
 
 //==================================================
@@ -700,12 +527,3 @@ bool FileManager::writeBoundaryOff(std::ostream & ostr, const MeshT& _mesh) cons
 } // Namespace IO
 
 } // Namespace FileManager
-
-
-
-
-
-
-
-
-

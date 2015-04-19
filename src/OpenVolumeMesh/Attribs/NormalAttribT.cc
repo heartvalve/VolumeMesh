@@ -34,9 +34,9 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 204 $                                                         *
- *   $Date: 2012-05-24 18:02:40 +0200 (Thu, 24 May 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 253 $                                                         *
+ *   $Date: 2013-10-02 10:58:10 +0200 (Wed, 02 Oct 2013) $                    *
+ *   $LastChangedBy: lyon $                                                *
  *                                                                           *
 \*===========================================================================*/
 
@@ -54,7 +54,8 @@ template <class GeomKernelT>
 NormalAttrib<GeomKernelT>::NormalAttrib(GeomKernelT& _kernel) :
 kernel_(_kernel),
 v_normals_(_kernel.template request_vertex_property<typename GeomKernelT::PointT>("vertex_normals")),
-f_normals_(_kernel.template request_face_property<typename GeomKernelT::PointT>("face_normals")) {
+f_normals_(_kernel.template request_face_property<typename GeomKernelT::PointT>("face_normals"))
+{
 
 }
 
@@ -97,21 +98,21 @@ void NormalAttrib<GeomKernelT>::update_face_normals() {
 template <class GeomKernelT>
 void NormalAttrib<GeomKernelT>::compute_vertex_normal(const VertexHandle& _vh) {
 
-    std::set<FaceHandle> faces;
+    std::set<HalfFaceHandle> halffaces;
     for(VertexOHalfEdgeIter voh_it = kernel_.voh_iter(_vh);
             voh_it.valid(); ++voh_it) {
 
         for(HalfEdgeHalfFaceIter hehf_it = kernel_.hehf_iter(*voh_it);
                 hehf_it.valid(); ++hehf_it) {
             if(kernel_.is_boundary(*hehf_it)) {
-                faces.insert(kernel_.face_handle(*hehf_it));
+                halffaces.insert(*hehf_it);
             }
         }
     }
-    typename GeomKernelT::PointT normal;
-    for(std::set<FaceHandle>::const_iterator f_it = faces.begin();
-            f_it != faces.end(); ++f_it) {
-        normal += f_normals_[f_it->idx()];
+    typename GeomKernelT::PointT normal = typename GeomKernelT::PointT(0.0);
+    for(std::set<HalfFaceHandle>::const_iterator hf_it = halffaces.begin();
+            hf_it != halffaces.end(); ++hf_it) {
+        normal += (*this)[*hf_it];
     }
 
     normal.normalize();

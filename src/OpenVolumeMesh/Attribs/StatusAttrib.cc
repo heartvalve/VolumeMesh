@@ -34,16 +34,22 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 210 $                                                         *
- *   $Date: 2012-06-08 14:09:44 +0200 (Fri, 08 Jun 2012) $                    *
- *   $LastChangedBy: moebius $                                                *
+ *   $Revision: 275 $                                                         *
+ *   $Date: 2014-06-24 15:18:45 +0200 (Tue, 24 Jun 2014) $                    *
+ *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
+
+#ifndef NDEBUG
+#include <iostream>
+#endif
 
 #include "StatusAttrib.hh"
 
 #include "../Core/TopologyKernel.hh"
 #include "../Core/PropertyDefines.hh"
+
+#include <map>
 
 namespace OpenVolumeMesh {
 
@@ -150,155 +156,13 @@ void StatusAttrib::mark_higher_dim_entities() {
 //========================================================================================
 
 void StatusAttrib::garbage_collection(bool _preserveManifoldness) {
+    std::vector<VertexHandle*> vh_empty;
+    std::vector<HalfEdgeHandle*> hh_empty;
+    std::vector<HalfFaceHandle*> hfh_empty;
+    std::vector<CellHandle*> ch_empty;
 
-    /*
-     * This is not a real garbage collection in its conventional
-     * sense. What happens in this routine are the following steps:
-     *
-     * 1. If an entity of dimension n is marked to be deleted,
-     *    also mark all incident entities of dimension n + 1
-     *    for deletion. Do this in a bottom-up fashion.
-     * 2. Then delete all entities in top-down manner, so that
-     *    no invalid incident higher-dimensional entity is generated.
-     * 3. If desired, search for all isolated entities and mark
-     *    them deleted in a top-down manner.
-     * 4. Delete all entities marked deleted in step 4 in order
-     *    to prevent manifoldness.
-     */
-
-    // Mark all higher-dimensional entities incident to
-    // entities marked as deleted from bottom to top
-    mark_higher_dim_entities();
-
-    std::vector<int> vertexIndexMap(kernel_.n_vertices(), -1);
-
-    // Turn off bottom-up incidences
-    bool v_bu = kernel_.has_vertex_bottom_up_incidences();
-    bool e_bu = kernel_.has_edge_bottom_up_incidences();
-    bool f_bu = kernel_.has_face_bottom_up_incidences();
-
-    kernel_.enable_bottom_up_incidences(false);
-
-    std::vector<bool> tags(kernel_.n_cells(), false);
-    std::vector<bool>::iterator tag_it = tags.begin();
-
-    for(CellIter c_it = kernel_.cells_begin(); c_it != kernel_.cells_end(); ++c_it, ++tag_it) {
-        *tag_it = c_status_[c_it->idx()].deleted();
-    }
-    kernel_.delete_multiple_cells(tags);
-
-    tags.resize(kernel_.n_faces(), false);
-    tag_it = tags.begin();
-
-    for(FaceIter f_it = kernel_.faces_begin(); f_it != kernel_.faces_end(); ++f_it, ++tag_it) {
-        *tag_it = f_status_[f_it->idx()].deleted();
-    }
-    kernel_.delete_multiple_faces(tags);
-
-    tags.resize(kernel_.n_edges(), false);
-    tag_it = tags.begin();
-
-    for(EdgeIter e_it = kernel_.edges_begin(); e_it != kernel_.edges_end(); ++e_it, ++tag_it) {
-        *tag_it = e_status_[e_it->idx()].deleted();
-    }
-    kernel_.delete_multiple_edges(tags);
-
-    tags.resize(kernel_.n_vertices(), false);
-    tag_it = tags.begin();
-
-    for(VertexIter v_it = kernel_.vertices_begin(); v_it != kernel_.vertices_end(); ++v_it, ++tag_it) {
-        *tag_it = v_status_[v_it->idx()].deleted();
-    }
-    kernel_.delete_multiple_vertices(tags);
-
-    // Todo: Resize props
-
-    if(v_bu) kernel_.enable_vertex_bottom_up_incidences(true);
-    if(e_bu) kernel_.enable_edge_bottom_up_incidences(true);
-    if(f_bu) kernel_.enable_face_bottom_up_incidences(true);
-
-    // Step 6
-    if(_preserveManifoldness) {
-        if(kernel_.has_full_bottom_up_incidences()) {
-
-            // Go over all faces and find those
-            // that are not incident to any cell
-            for(FaceIter f_it = kernel_.faces_begin(); f_it != kernel_.faces_end(); ++f_it) {
-
-                // Get half-faces
-                HalfFaceHandle hf0 = kernel_.halfface_handle(*f_it, 0);
-                HalfFaceHandle hf1 = kernel_.halfface_handle(*f_it, 1);
-
-                // If neither of the half-faces is incident to a cell, delete face
-                if(kernel_.incident_cell(hf0) == TopologyKernel::InvalidCellHandle &&
-                        kernel_.incident_cell(hf1) == TopologyKernel::InvalidCellHandle) {
-
-                    f_status_[f_it->idx()].set_deleted(true);
-                }
-            }
-
-            // Go over all edges and find those
-            // whose half-edges are not incident to any half-face
-            for(EdgeIter e_it = kernel_.edges_begin(); e_it != kernel_.edges_end(); ++e_it) {
-
-                // Get half-edges
-                HalfEdgeHandle he = kernel_.halfedge_handle(*e_it, 0);
-
-                // If the half-edge isn't incident to a half-face, delete edge
-                HalfEdgeHalfFaceIter hehf_it = kernel_.hehf_iter(he);
-
-                if(!hehf_it.valid()) {
-
-                    e_status_[e_it->idx()].set_deleted(true);
-
-                } else {
-                    bool validFace = false;
-                    for(; hehf_it.valid(); ++hehf_it) {
-                        if(!f_status_[kernel_.face_handle(*hehf_it).idx()].deleted()) {
-                            validFace = true;
-                            break;
-                        }
-                    }
-                    if(!validFace) {
-                        e_status_[e_it->idx()].set_deleted(true);
-                    }
-                }
-            }
-
-            // Go over all vertices and find those
-            // that are not incident to any edge
-            for(VertexIter v_it = kernel_.vertices_begin(); v_it != kernel_.vertices_end(); ++v_it) {
-
-                // If neither of the half-edges is incident to a half-face, delete edge
-                VertexOHalfEdgeIter voh_it = kernel_.voh_iter(*v_it);
-
-                if(!voh_it.valid()) {
-
-                    v_status_[v_it->idx()].set_deleted(true);
-                } else {
-
-                    bool validEdge = false;
-                    for(; voh_it.valid(); ++voh_it) {
-                        if(!e_status_[kernel_.edge_handle(voh_it->idx())].deleted()) {
-                            validEdge = true;
-                            break;
-                        }
-                    }
-                    if(!validEdge) {
-                        v_status_[v_it->idx()].set_deleted(true);
-                    }
-                }
-            }
-
-            // Recursive call
-            garbage_collection(false);
-
-        } else {
-            std::cerr << "Preservation of three-manifoldness in garbage_collection() "
-                    << "requires bottom-up incidences!" << std::endl;
-            return;
-        }
-    }
+    garbage_collection(vh_empty, hh_empty, hfh_empty, ch_empty, _preserveManifoldness);
 }
+
 
 } // Namespace OpenVolumeMesh

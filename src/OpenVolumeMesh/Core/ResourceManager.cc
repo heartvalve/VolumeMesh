@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 198 $                                                         *
- *   $Date: 2012-05-16 12:52:10 +0200 (Wed, 16 May 2012) $                    *
+ *   $Revision: 246 $                                                         *
+ *   $Date: 2013-07-23 11:25:56 +0200 (Tue, 23 Jul 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -60,24 +60,24 @@ ResourceManager::~ResourceManager() {
     clearVec(mesh_props_);
 }
 
-void ResourceManager::resize_vprops(unsigned int _nv) {
+void ResourceManager::resize_vprops(size_t _nv) {
 
     resize_props(vertex_props_, _nv);
 }
 
-void ResourceManager::resize_eprops(unsigned int _ne) {
+void ResourceManager::resize_eprops(size_t _ne) {
 
     resize_props(edge_props_, _ne);
     resize_props(halfedge_props_, _ne*2u);
 }
 
-void ResourceManager::resize_fprops(unsigned int _nf) {
+void ResourceManager::resize_fprops(size_t _nf) {
 
     resize_props(face_props_, _nf);
     resize_props(halfface_props_, _nf*2u);
 }
 
-void ResourceManager::resize_cprops(unsigned int _nc) {
+void ResourceManager::resize_cprops(size_t _nc) {
 
     resize_props(cell_props_, _nc);
 }

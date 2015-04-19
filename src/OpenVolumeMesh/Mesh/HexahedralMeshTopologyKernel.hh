@@ -34,15 +34,18 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 216 $                                                         *
- *   $Date: 2012-07-18 10:27:26 +0200 (Wed, 18 Jul 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 261 $                                                         *
+ *   $Date: 2014-03-28 14:51:14 +0100 (Fri, 28 Mar 2014) $                    *
+ *   $LastChangedBy: lyon $                                                *
  *                                                                           *
 \*===========================================================================*/
 
 #ifndef HEXAHEDRALMESHTOPOLOGYKERNEL_HH
 #define HEXAHEDRALMESHTOPOLOGYKERNEL_HH
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
 #include <set>
 
 #include "../Core/TopologyKernel.hh"
@@ -133,10 +136,11 @@ public:
      *   0-------1
      *
      * @param _vertices A list of vertices in the correct order
+     * @param _topologyCheck Flag if a topology check should be performed before adding the cell
      *
      * @return The new hexahedron's cell handle
      */
-    CellHandle add_cell(const std::vector<VertexHandle>& _vertices);
+    CellHandle add_cell(const std::vector<VertexHandle>& _vertices, bool _topologyCheck = false);
 
     // ======================= Specialized Iterators =============================
 
@@ -148,16 +152,34 @@ public:
     typedef class HalfFaceSheetHalfFaceIter HalfFaceSheetHalfFaceIter;
     typedef class HexVertexIter HexVertexIter;
 
-    CellSheetCellIter csc_iter(const CellHandle& _ref_h, const unsigned char _orthDir) const {
-        return CellSheetCellIter(_ref_h, _orthDir, this);
+    CellSheetCellIter csc_iter(const CellHandle& _ref_h, const unsigned char _orthDir, int _max_laps = 1) const {
+        return CellSheetCellIter(_ref_h, _orthDir, this, _max_laps);
     }
 
-    HalfFaceSheetHalfFaceIter hfshf_iter(const HalfFaceHandle& _ref_h) const {
-        return HalfFaceSheetHalfFaceIter(_ref_h, this);
+    std::pair<CellSheetCellIter,CellSheetCellIter> cell_sheet_cells(const CellHandle& _ref_h, const unsigned char _orthDir, int _max_laps = 1) const {
+        CellSheetCellIter begin = csc_iter(_ref_h, _orthDir, _max_laps);
+        CellSheetCellIter end   = make_end_circulator(begin);
+        return std::make_pair(begin, end);
     }
 
-    HexVertexIter hv_iter(const CellHandle& _ref_h) const {
-        return HexVertexIter(_ref_h, this);
+    HalfFaceSheetHalfFaceIter hfshf_iter(const HalfFaceHandle& _ref_h, int _max_laps = 1) const {
+        return HalfFaceSheetHalfFaceIter(_ref_h, this, _max_laps);
+    }
+
+    std::pair<HalfFaceSheetHalfFaceIter,HalfFaceSheetHalfFaceIter> halfface_sheet_halffaces(const HalfFaceHandle& _ref_h, int _max_laps = 1) const {
+        HalfFaceSheetHalfFaceIter begin = hfshf_iter(_ref_h, _max_laps);
+        HalfFaceSheetHalfFaceIter end   = make_end_circulator(begin);
+        return std::make_pair(begin, end);
+    }
+
+    HexVertexIter hv_iter(const CellHandle& _ref_h, int _max_laps = 1) const {
+        return HexVertexIter(_ref_h, this, _max_laps);
+    }
+
+    std::pair<HexVertexIter,HexVertexIter> hex_vertices(const CellHandle& _ref_h, int _max_laps = 1) const {
+        HexVertexIter begin = hv_iter(_ref_h, _max_laps);
+        HexVertexIter end   = make_end_circulator(begin);
+        return std::make_pair(begin, end);
     }
 
     // ======================= Connectivity functions =============================
@@ -277,7 +299,9 @@ public:
     HalfFaceHandle adjacent_halfface_on_sheet(const HalfFaceHandle& _hfh, const HalfEdgeHandle& _heh) const {
 
         if(!TopologyKernel::has_face_bottom_up_incidences()) {
+#ifndef NDEBUG
             std::cerr << "No bottom-up incidences computed so far, could not get adjacent halfface on sheet!" << std::endl;
+#endif
             return TopologyKernel::InvalidHalfFaceHandle;
         }
 
@@ -334,7 +358,9 @@ public:
     HalfFaceHandle neighboring_outside_halfface(const HalfFaceHandle& _hfh, const HalfEdgeHandle& _heh) const {
 
         if(!TopologyKernel::has_face_bottom_up_incidences()) {
+#ifndef NDEBUG
             std::cerr << "No bottom-up incidences computed so far, could not get neighboring outside halfface!" << std::endl;
+#endif
             return TopologyKernel::InvalidHalfFaceHandle;
         }
 

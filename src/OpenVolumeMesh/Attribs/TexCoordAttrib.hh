@@ -34,44 +34,69 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 115 $                                                         *
- *   $Date: 2012-02-24 10:42:21 +0100 (Fri, 24 Feb 2012) $                    *
+ *   $Revision: 36 $                                                         *
+ *   $Date: 2012-01-10 18:00:06 +0100 (Di, 10 Jan 2012) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
 
-#ifndef HEXAHEDRALMESH_HH_
-#define HEXAHEDRALMESH_HH_
+#ifndef TEXCOORDATTRIB_HH_
+#define TEXCOORDATTRIB_HH_
 
-#include "HexahedralMeshTopologyKernel.hh"
-#include "../Core/GeometryKernel.hh"
+#include <cassert>
+
+#include "../Core/OpenVolumeMeshHandle.hh"
+#include "OpenVolumeMeshStatus.hh"
+#include "../Core/PropertyDefines.hh"
+#include "../Core/TopologyKernel.hh"
 
 namespace OpenVolumeMesh {
 
-/*
- * Predefines for most common mesh types
- */
-typedef GeometryKernel<Geometry::Vec2i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2i;
-typedef GeometryKernel<Geometry::Vec2ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2ui;
-typedef GeometryKernel<Geometry::Vec2f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2f;
-typedef GeometryKernel<Geometry::Vec2d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2d;
-typedef GeometryKernel<Geometry::Vec2c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2c;
-typedef GeometryKernel<Geometry::Vec2uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2uc;
-typedef GeometryKernel<Geometry::Vec3i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3i;
-typedef GeometryKernel<Geometry::Vec3ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3ui;
-typedef GeometryKernel<Geometry::Vec3f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3f;
-typedef GeometryKernel<Geometry::Vec3d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3d;
-typedef GeometryKernel<Geometry::Vec3c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3c;
-typedef GeometryKernel<Geometry::Vec3uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3uc;
-typedef GeometryKernel<Geometry::Vec4i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4i;
-typedef GeometryKernel<Geometry::Vec4ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4ui;
-typedef GeometryKernel<Geometry::Vec4f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4f;
-typedef GeometryKernel<Geometry::Vec4d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4d;
-typedef GeometryKernel<Geometry::Vec4c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4c;
-typedef GeometryKernel<Geometry::Vec4uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4uc;
+//== CLASS DEF ================================================================
 
-typedef HexahedralMeshTopologyKernel TopologicHexahedralMesh;
+template <class TexCoordT>
+class TexCoordAttrib {
+public:
+
+    TexCoordAttrib(TopologyKernel& _kernel, const TexCoordT _def = TexCoordT());
+
+    virtual ~TexCoordAttrib();
+
+    //==================
+    // Vertices
+    //==================
+    const TexCoordT& operator[](const VertexHandle& _h) const {
+        assert((unsigned int)_h.idx() < kernel_.n_vertices());
+        return vtexcoord_prop_[_h.idx()];
+    }
+
+    TexCoordT& operator[](const VertexHandle& _h) {
+        assert((unsigned int)_h.idx() < kernel_.n_vertices());
+        vertex_texcoords_available_ = true;
+        return vtexcoord_prop_[_h.idx()];
+    }
+
+    bool vertex_texcoords_available()   { return vertex_texcoords_available_;   }
+
+    void clear_vertex_texcoords();
+
+
+private:
+
+    VertexPropertyT<TexCoordT> vtexcoord_prop_;
+
+    TopologyKernel& kernel_;
+
+    bool vertex_texcoords_available_;
+
+    TexCoordT default_texcoord_;
+
+};
 
 } // Namespace OpenVolumeMesh
 
-#endif /* HEXAHEDRALMESH_HH_ */
+#if defined(INCLUDE_TEMPLATES) && !defined(TEXCOORDATTRIBT_CC)
+#include "TexCoordAttribT.cc"
+#endif
+
+#endif /* TEXCOORDATTRIB_HH_ */

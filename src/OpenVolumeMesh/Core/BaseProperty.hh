@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 198 $                                                         *
- *   $Date: 2012-05-16 12:52:10 +0200 (Wed, 16 May 2012) $                    *
+ *   $Revision: 250 $                                                         *
+ *   $Date: 2013-08-09 10:28:25 +0200 (Fri, 09 Aug 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -76,6 +76,10 @@ public:
     virtual bool persistent() const = 0;
 
     virtual bool anonymous() const = 0;
+
+    virtual const std::string entityType() const = 0;
+
+    virtual const std::string typeNameWrapper() const = 0;
 
 protected:
 

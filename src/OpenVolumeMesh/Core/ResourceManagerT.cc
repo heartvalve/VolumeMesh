@@ -34,19 +34,16 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 217 $                                                         *
- *   $Date: 2012-07-18 15:04:05 +0200 (Wed, 18 Jul 2012) $                    *
- *   $LastChangedBy: kremer $                                                *
+ *   $Revision: 289 $                                                         *
+ *   $Date: 2015-04-02 10:20:53 +0200 (Thu, 02 Apr 2015) $                    *
+ *   $LastChangedBy: lim $                                                *
  *                                                                           *
 \*===========================================================================*/
 
 #define RESOURCEMANAGERT_CC
 
 #include "ResourceManager.hh"
-
 #include "PropertyDefines.hh"
-
-#include "PropertyPtr.hh"
 
 namespace OpenVolumeMesh {
 
@@ -101,7 +98,6 @@ PropT ResourceManager::request_property(StdVecT& _vec, const std::string& _name,
             if((*it)->name() == _name) {
                 PropT* prop = dynamic_cast<PropT*>(*it);
                 if(prop != NULL) return *prop;
-                else break;
             }
         }
     }
@@ -180,7 +176,7 @@ void ResourceManager::remove_property(StdVecT& _vec, size_t _idx) {
 }
 
 template<class StdVecT>
-void ResourceManager::resize_props(StdVecT& _vec, unsigned int _n) {
+void ResourceManager::resize_props(StdVecT& _vec, size_t _n) {
 
     for(typename StdVecT::iterator it = _vec.begin();
             it != _vec.end(); ++it) {
@@ -200,20 +196,22 @@ void ResourceManager::entity_deleted(StdVecT& _vec, const OpenVolumeMeshHandle& 
 template<class StdVecT>
 void ResourceManager::clearVec(StdVecT& _vec) {
 
+    StdVecT newVec;
     for(typename StdVecT::iterator it = _vec.begin();
             it != _vec.end(); ++it) {
         if(!(*it)->persistent()) {
-            std::cerr << "Could not clear properties since at " <<
-                    "least one property is still in use!" << std::endl;
-            return;
+#ifndef NDEBUG
+            std::cerr << "Keeping property \"" << (*it)->name()
+                      << "\" since it is still in use!" << std::endl;
+#endif
+            (*it)->resize(0);
+            newVec.push_back(*it);
         }
+        else
+            delete *it;
     }
 
-    for(typename StdVecT::iterator it = _vec.begin();
-            it != _vec.end(); ++it) {
-        delete *it;
-    }
-    _vec.clear();
+    _vec = newVec;
 }
 
 } // Namespace OpenVolumeMesh

@@ -34,44 +34,56 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 115 $                                                         *
- *   $Date: 2012-02-24 10:42:21 +0100 (Fri, 24 Feb 2012) $                    *
+ *   $Revision: 236 $                                                         *
+ *   $Date: 2013-02-19 12:32:33 +0100 (Tue, 19 Feb 2013) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
 
-#ifndef HEXAHEDRALMESH_HH_
-#define HEXAHEDRALMESH_HH_
 
-#include "HexahedralMeshTopologyKernel.hh"
-#include "../Core/GeometryKernel.hh"
+#ifndef SERIALIZERS_HH
+#define SERIALIZERS_HH
 
-namespace OpenVolumeMesh {
+#include <iostream>
+#include <map>
+#include <vector>
 
-/*
- * Predefines for most common mesh types
- */
-typedef GeometryKernel<Geometry::Vec2i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2i;
-typedef GeometryKernel<Geometry::Vec2ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2ui;
-typedef GeometryKernel<Geometry::Vec2f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2f;
-typedef GeometryKernel<Geometry::Vec2d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2d;
-typedef GeometryKernel<Geometry::Vec2c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2c;
-typedef GeometryKernel<Geometry::Vec2uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV2uc;
-typedef GeometryKernel<Geometry::Vec3i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3i;
-typedef GeometryKernel<Geometry::Vec3ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3ui;
-typedef GeometryKernel<Geometry::Vec3f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3f;
-typedef GeometryKernel<Geometry::Vec3d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3d;
-typedef GeometryKernel<Geometry::Vec3c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3c;
-typedef GeometryKernel<Geometry::Vec3uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV3uc;
-typedef GeometryKernel<Geometry::Vec4i, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4i;
-typedef GeometryKernel<Geometry::Vec4ui, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4ui;
-typedef GeometryKernel<Geometry::Vec4f, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4f;
-typedef GeometryKernel<Geometry::Vec4d, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4d;
-typedef GeometryKernel<Geometry::Vec4c, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4c;
-typedef GeometryKernel<Geometry::Vec4uc, HexahedralMeshTopologyKernel> GeometricHexahedralMeshV4uc;
+#include <sstream>
+#include <string>
 
-typedef HexahedralMeshTopologyKernel TopologicHexahedralMesh;
+#include <iterator>
 
-} // Namespace OpenVolumeMesh
+namespace OpenVolumeMesh
+{
 
-#endif /* HEXAHEDRALMESH_HH_ */
+template <typename ValueT>
+std::ostream& serialize(std::ostream& os, const ValueT& rhs);
+
+std::ostream& serialize(std::ostream& os, const std::string& rhs);
+
+template <typename ValueT>
+std::istream& deserialize(std::istream& is, ValueT& rhs);
+
+std::istream& deserialize(std::istream& is, std::string& rhs);
+
+template <typename KeyT, typename ValueT>
+std::ostream& operator<<(std::ostream& os, const std::map< KeyT, ValueT >& rhs);
+
+template <typename KeyT, typename ValueT>
+std::istream& operator>>(std::istream& is, std::map< KeyT, ValueT >& rhs);
+
+template <typename ValueT>
+std::ostream& operator<<(std::ostream& os, const std::vector< ValueT >& rhs);
+
+template <typename ValueT>
+std::istream& operator>>(std::istream& is, std::vector< ValueT >& rhs);
+
+std::istream& operator>>(std::istream& is, std::vector< bool >& rhs);
+
+}
+
+#if defined(INCLUDE_TEMPLATES) && !defined(SERIALIZERST_CC)
+#include "SerializersT.cc"
+#endif
+
+#endif // SERIALIZERS_HH

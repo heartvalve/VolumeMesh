@@ -34,8 +34,8 @@
 
 /*===========================================================================*\
  *                                                                           *
- *   $Revision: 222 $                                                         *
- *   $Date: 2012-07-30 10:44:54 +0200 (Mo, 30 Jul 2012) $                    *
+ *   $Revision: 282 $                                                         *
+ *   $Date: 2014-07-01 15:28:24 +0200 (Tue, 01 Jul 2014) $                    *
  *   $LastChangedBy: kremer $                                                *
  *                                                                           *
 \*===========================================================================*/
@@ -44,6 +44,7 @@
 #define GEOMETRYKERNEL_HH_
 
 #include <cassert>
+#include <iostream>
 
 #include "../Geometry/VectorT.hh"
 #include "TopologyKernel.hh"
@@ -181,20 +182,13 @@ public:
 
     void swap_vertices(std::vector<VecT>& _copy) {
         if(_copy.size() != vertices_.size()) {
-            std::cerr << "Vertex vectors differ in size!" << std::endl;
-            return;
+            std::cerr << "Vertex vectors differ in size! The size of the copy " <<
+            		"is artificially set to the correct one. Some values may not be correctly initialized." << std::endl;
+            _copy.resize(vertices_.size());
         }
         std::swap(vertices_, _copy);
     }
 
-	int orient3d (const PointT & a , const PointT & b, const PointT & c , const PointT & d)
-	{
-		typedef typename PointT::value_type value_type ; 
-		value_type v = dot((d - a) , (b - a) % (c - a)) ;		
-		if (v > 0) return 1; 
-		if (v < 0) return -1; 
-		return 0; 
-	}
 private:
 
     std::vector<VecT> vertices_;
